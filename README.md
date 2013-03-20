@@ -16,6 +16,8 @@ Major problem is the paramstyle hdb supports qmark while django assumes %s, need
 
 Hana doesn't support timestamp with timezone info, stripping timezone info from the string
 
+Select and update works with tested models
+
 Disclaimer
 --------------
 This project is not a part of standard SAP HANA delivery, hence SAP support is not responsible for any queries related to
