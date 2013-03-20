@@ -9,6 +9,8 @@ from django.db.models.sql.datastructures import EmptyResultSet
 from django.db.models.sql.expressions import SQLEvaluator
 from django.db.models.sql.query import get_order_dir, Query
 from django.db.utils import DatabaseError
+from django.db import models
+import datetime
 
 
 class SQLCompiler(object):
@@ -850,7 +852,7 @@ class SQLInsertCompiler(SQLCompiler):
             return field.get_placeholder(val, self.connection)
         else:
             # Return the common case for the placeholder
-            return '?'
+            return '%s'
 
     def as_sql(self):
         # We don't need quote_name_unless_alias() here, since these are all
@@ -870,17 +872,16 @@ class SQLInsertCompiler(SQLCompiler):
 	    result.append('(%s)' % ', '.join([qn(f.column) for f in fields]))
 
         if has_fields:
-	    from django.db import models
-	    import datetime
 	    params=[]
 	    for obj in self.query.objs:
 	    	vals=[]
 	    	for f in fields:
 		    val=f.get_db_prep_save(getattr(obj, f.attname) if self.query.raw else f.pre_save(obj, True), connection=self.connection)
-		    print val
 		    if isinstance(f,models.DateTimeField):
 		        #remove timezone data, dbapi doesn't supports
-			val=val.partition('+')[0]
+                        ts=getattr(obj,f.attname)
+                        ts=datetime.datetime(ts.year,ts.month,ts.day,ts.hour,ts.minute,ts.second,ts.microsecond)
+                        val=str(ts)
 		    vals.append(val)
 		params.append(vals)	
 
@@ -955,7 +956,14 @@ class SQLUpdateCompiler(SQLCompiler):
             if hasattr(val, 'prepare_database_save'):
                 val = val.prepare_database_save(field)
             else:
-                val = field.get_db_prep_save(val, connection=self.connection)
+                if isinstance(field,models.DateTimeField):
+		    #remove timezone data, dbapi doesn't supports
+                    val=datetime.datetime(val.year,val.month,val.day,val.hour,val.minute,val.second,val.microsecond)
+                    val=str(val)
+                else:
+                    val = field.get_db_prep_save(val, connection=self.connection)
+            
+            
 
             # Getting the placeholder for the field.
             if hasattr(field, 'get_placeholder'):
