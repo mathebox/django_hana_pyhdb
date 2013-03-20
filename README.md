@@ -4,19 +4,22 @@ Under Development
 
 Log
 ------
-connects to db
 
-uses the settings_dict['NAME'] as default schema
+Need to make a decorator for creating column tables out of models
 
-syncdb creates tables, sequences and indexes
+Select and update works with tested models. Placeholder conversion works!!
 
-Simple inserts work
-
-Major problem is the paramstyle hdb supports qmark while django assumes %s, need to write a converter
+Major problem is the paramstyle, hdb dbapi supports qmark while django assumes %s, need to write a converter
 
 Hana doesn't support timestamp with timezone info, stripping timezone info from the string
 
-Select and update works with tested models
+Simple inserts work
+
+syncdb creates tables, sequences and indexes
+
+connects to db
+
+uses the settings_dict['NAME'] as default schema
 
 Disclaimer
 --------------
