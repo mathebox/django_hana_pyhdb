@@ -4,6 +4,7 @@ Under Development
 
 Log
 ------
+custom autofield for UUID
 
 Need to make a decorator for creating column tables out of models
 
