@@ -10,6 +10,12 @@ uses the settings_dict['NAME'] as default schema
 
 syncdb creates tables, sequences and indexes
 
+Simple inserts work
+
+Major problem is the paramstyle hdb supports qmark while django assumes %s, need to write a converter
+
+Hana doesn't support timestamp with timezone info, stripping timezone info from the string
+
 Disclaimer
 --------------
 This project is not a part of standard SAP HANA delivery, hence SAP support is not responsible for any queries related to
