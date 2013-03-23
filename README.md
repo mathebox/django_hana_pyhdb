@@ -32,6 +32,7 @@ Log
 	May be grab the seq's nextval while constructing insert query and use it in place of id and return it after insert is done.
 -	Tested with models in official django tutorial and Models References. All queries worked. 
 -	Currently, executes set schema on every cursor creation. Prefixing each table name with schema name is more efficient. Needs rework.
+-	Select and update works with tested models. Placeholder conversion works!!
 -	Major problem is the paramstyle hdb supports qmark while django assumes %s, need to write a converter
 -	Hana doesn't support timestamp with timezone info, stripping timezone info from the string
 -	Select and update works with tested models
