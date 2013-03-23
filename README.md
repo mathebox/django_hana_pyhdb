@@ -39,6 +39,11 @@ Log
 -	Hana doesn't support timestamp with timezone info, stripping timezone info from the string
 -	Select and update works with tested models
 
+TODO
+-----
+-	Create decorator for creating column store tables. Currently, all tables are created as row stores.
+-	Make a custom auto field for UUID
+
 Disclaimer
 --------------
 This project is not a part of standard SAP HANA delivery, hence SAP support is not responsible for any queries related to
