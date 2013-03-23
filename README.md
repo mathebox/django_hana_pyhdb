@@ -7,6 +7,7 @@ Prerequisite
 1. Python compiled with --enable-unicode=ucs2 or use the python provided with hdbclient package.
 2. Django 1.4 (Only tested with this version, 1.5 might work)
 3. HANA python driver configured in python path. Only available for windows x86_64 and linux x86_64
+4. Tested with HDB version 1.00.45.371235 (NewDB100_REL). 
 
 Setup
 ------
@@ -43,6 +44,7 @@ TODO
 -----
 -	Create decorator for creating column store tables. Currently, all tables are created as row stores.
 -	Make a custom auto field for UUID
+-	Do more tests
 
 Disclaimer
 --------------
