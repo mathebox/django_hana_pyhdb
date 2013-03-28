@@ -24,7 +24,7 @@ Setup
 		        'PORT': '3<INSTANCE_NUMBER>15',               
 		    }
 		}
-
+3. HANA doesn't support Timezone. Set USE_TZ=False in settings.py.
 
 Log
 ------
