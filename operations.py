@@ -60,11 +60,11 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
                 if isinstance(f, models.AutoField):
                     output.append("%s %s %s %s %s %s" % \
                         (style.SQL_KEYWORD("ALTER SEQUENCE"),
-                        style.SQL_TABLE(self.get_seq_name(model._meta.db_table,f.column),
+                        style.SQL_TABLE(self.get_seq_name(model._meta.db_table,f.column)),
                         style.SQL_KEYWORD("RESET BY SELECT"),
                         style.SQL_FIELD("IFNULL(MAX("+f.column+"),0) + 1"),
                         style.SQL_KEYWORD("FROM"),
-                        style.SQL_TABLE(model._meta.db_table))))
+                        style.SQL_TABLE(model._meta.db_table)))
                     break # Only one AutoField is allowed per model, so don't bother continuing.
             for f in model._meta.many_to_many:
                 if not f.rel.through:

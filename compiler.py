@@ -855,16 +855,18 @@ class SQLInsertCompiler(SQLCompiler):
             return '%s'
 
     def as_sql(self):
-        # We don't need quote_name_unless_alias() here, since these are all
-        # going to be column names (so we can avoid the extra overhead).
         qn = self.connection.ops.quote_name
         opts = self.query.model._meta
         result = ['INSERT INTO %s' % qn(opts.db_table)]
 
         has_fields = bool(self.query.fields)
         fields = self.query.fields if has_fields else [opts.pk]
-	
-	if opts.has_auto_field:
+        
+        pkinfields=False #when explicit pk value is provided 
+        if opts.pk in fields:
+            pkinfields=True;
+
+	if opts.has_auto_field and not pkinfields:
 	    # get auto field name
 	    auto_field_column=opts.auto_field.db_column or opts.auto_field.column
 	    result.append('('+auto_field_column+',%s)' % ', '.join([qn(f.column) for f in fields]))
@@ -886,21 +888,22 @@ class SQLInsertCompiler(SQLCompiler):
 		params.append(vals)	
 
 	    values=params
-
         else:
             values = [[self.connection.ops.pk_default_value()] for obj in self.query.objs]
             params = [[]]
             fields = [None]
 
-        placeholders = [
-	    [
-	        self.placeholder(field, v) for field, v in izip(fields, val)
-	    ]
-                for val in values
-        ]
+        placeholders=[]
+        for val in values:
+            p=[]
+            for field,v in izip(fields,val):
+                p.append(self.placeholder(field,v))
+            placeholders.append(p)
 
-	seq_func=''
-	if opts.has_auto_field: 
+
+	seq_func=''     
+        # don't insert call to seq function if explicit pk field value is provided
+	if opts.has_auto_field and not pkinfields:  
 	    auto_field_column=opts.auto_field.db_column or opts.auto_field.column
 	    seq_func=self.connection.ops.get_seq_name(opts.db_table,auto_field_column)+'.nextval, '
 	    
