@@ -10,7 +10,6 @@ from django.db.models.sql.expressions import SQLEvaluator
 from django.db.models.sql.query import get_order_dir, Query
 from django.db.utils import DatabaseError
 from django.db import models
-import datetime
 
 
 class SQLCompiler(object):
@@ -879,11 +878,6 @@ class SQLInsertCompiler(SQLCompiler):
 	    	vals=[]
 	    	for f in fields:
 		    val=f.get_db_prep_save(getattr(obj, f.attname) if self.query.raw else f.pre_save(obj, True), connection=self.connection)
-		    if isinstance(f,models.DateTimeField):
-		        #remove timezone data, dbapi doesn't supports
-                        ts=getattr(obj,f.attname)
-                        ts=datetime.datetime(ts.year,ts.month,ts.day,ts.hour,ts.minute,ts.second,ts.microsecond)
-                        val=str(ts)
 		    vals.append(val)
 		params.append(vals)	
 
@@ -959,12 +953,7 @@ class SQLUpdateCompiler(SQLCompiler):
             if hasattr(val, 'prepare_database_save'):
                 val = val.prepare_database_save(field)
             else:
-                if isinstance(field,models.DateTimeField):
-		    #remove timezone data, dbapi doesn't supports
-                    val=datetime.datetime(val.year,val.month,val.day,val.hour,val.minute,val.second,val.microsecond)
-                    val=str(val)
-                else:
-                    val = field.get_db_prep_save(val, connection=self.connection)
+                val = field.get_db_prep_save(val, connection=self.connection)
             
             
 

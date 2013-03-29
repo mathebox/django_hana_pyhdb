@@ -117,5 +117,18 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
 	cursor.execute('select '+self.connection.ops.get_seq_name(table_name,pk_name)+'.currval from dummy')
         return cursor.fetchone()[0]
 
-
+    def value_to_db_datetime(self, value):
+        """
+        Transform a datetime value to an object compatible with what is expected
+        by the backend driver for datetime columns.
+        """
+        if value is None:
+            return None
+        if value.tzinfo:
+            # HANA doesn't support timezone. If tzinfo is present truncate it.
+            # Better set USE_TZ=False in settings.py
+            import datetime
+            return unicode(datetime.datetime(value.year,value.month,value.day,value.hour,\
+                    value.minute,value.second,value.microsecond))
+        return unicode(value)
 
