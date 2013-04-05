@@ -21,7 +21,7 @@ OR
 		
 		DATABASES = {
 		    'default': {
-		        'ENGINE': 'hana_django', # or as per your python path
+		        'ENGINE': 'django_hana', # or as per your python path
 		        'NAME': '<SCHEMA_NAME>',                      # The schema to use. It will be created if doesn't exist
 		        'USER': '<USERNAME>',
 		        'PASSWORD': '<PASSWORD>',
