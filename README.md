@@ -11,12 +11,17 @@ Prerequisite
 
 Setup
 ------
-1. copy all files in django/db/backends/hana directory or anywhere you want, making sure it is in python path
+1. install the python package via setup.py
+```bash
+python setup.py install
+```
+OR
+1. copy all files in django/db/backends/hana_django directory or anywhere you want, making sure it is in python path
 2. The config in the Django project is as follows
 		
 		DATABASES = {
 		    'default': {
-		        'ENGINE': 'django.db.backends.hana', # or as per your python path
+		        'ENGINE': 'hana_django', # or as per your python path
 		        'NAME': '<SCHEMA_NAME>',                      # The schema to use. It will be created if doesn't exist
 		        'USER': '<USERNAME>',
 		        'PASSWORD': '<PASSWORD>',
