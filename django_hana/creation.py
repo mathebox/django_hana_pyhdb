@@ -89,8 +89,8 @@ class DatabaseCreation(BaseDatabaseCreation):
                 opts.db_tablespace)
             if tablespace_sql:
                 full_statement.append(tablespace_sql)
-	#HANA complains with semicolon at the end
-	#full_statement.append(';')
+        #HANA complains with semicolon at the end
+        #full_statement.append(';')
         final_output.append('\n'.join(full_statement))
 
         if opts.has_auto_field:
@@ -106,14 +106,14 @@ class DatabaseCreation(BaseDatabaseCreation):
         return final_output, pending_references
 
 
-	
+        
     def sql_for_inline_foreign_key_references(self, field, known_models, style):
         """
         Return the SQL snippet defining the foreign key reference for a field.
-		Foreign key not supported
+                Foreign key not supported
         """
         return [],False
-	
+        
     def sql_destroy_model(self, model, references_to_delete, style):
         """
             Return the DROP TABLE and restraint dropping statements for a single
@@ -130,7 +130,7 @@ class DatabaseCreation(BaseDatabaseCreation):
             if ds:
                 output.append(ds)
         return output
-	
+        
     def _create_test_db(self, verbosity, autoclobber):
         """
         Internal implementation - creates the test db tables.
@@ -173,7 +173,7 @@ class DatabaseCreation(BaseDatabaseCreation):
                 sys.exit(1)
 
         return test_database_name
-		
+                
     def _destroy_test_db(self, test_database_name, verbosity):
         """
         Internal implementation - remove the test db tables.
@@ -206,7 +206,7 @@ class DatabaseCreation(BaseDatabaseCreation):
             else:
                 tablespace_sql = ''
             i_name = '%s_%s' % (model._meta.db_table, self._digest(f.column))
-	    #HANA complains with semicolon at the end
+            #HANA complains with semicolon at the end
             output = [style.SQL_KEYWORD('CREATE INDEX') + ' ' +
                 style.SQL_TABLE(qn(truncate_name(
                     i_name, self.connection.ops.max_name_length()))) + ' ' +
