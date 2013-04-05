@@ -153,7 +153,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.features = DatabaseFeatures(self)
         autocommit = self.settings_dict["OPTIONS"].get('autocommit', False)
         self.features.uses_autocommit = autocommit
-		
+
         self.ops = DatabaseOperations(self)
         self.client = DatabaseClient(self)
         self.creation = DatabaseCreation(self)
@@ -177,7 +177,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                 exc_info=sys.exc_info()
             )
             raise
-			
+
     def _cursor(self):
         settings_dict = self.settings_dict
         if self.connection is None:
@@ -207,7 +207,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.default_schema=self.default_schema.upper()
             logger.info('DB Connected')
         cursor = self.connection.cursor()
-	self.create_or_set_default_schema(cursor)
+        self.create_or_set_default_schema(cursor)
         logger.info('Cursor created')
         return cursor
 
@@ -232,8 +232,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         res=cursor.fetchone()
         if not res:
             cursor.execute("create schema %s" % self.default_schema)
-	cursor.execute("set schema "+self.default_schema)
-	
+        cursor.execute("set schema "+self.default_schema)
+    
     def _enter_transaction_management(self, managed):
         """
         Switch the isolation level when needing transaction support, so that
