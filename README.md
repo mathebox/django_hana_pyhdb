@@ -15,8 +15,7 @@ Setup
 ```bash
 python setup.py install
 ```
-OR
-1. copy all files in django/db/backends/hana_django directory or anywhere you want, making sure it is in python path
+
 2. The config in the Django project is as follows
 		
 		DATABASES = {
