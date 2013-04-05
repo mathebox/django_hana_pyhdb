@@ -6,23 +6,23 @@ class DatabaseCreation(BaseDatabaseCreation):
     data_types = {
         'AutoField':         'int',
         'BooleanField':      'tinyint',
-        'CharField':         'varchar(%(max_length)s)',
-        'CommaSeparatedIntegerField': 'varchar(%(max_length)s)',
+        'CharField':         'nvarchar(%(max_length)s)',
+        'CommaSeparatedIntegerField': 'nvarchar(%(max_length)s)',
         'DateField':         'date',
         'DateTimeField':     'timestamp',
         'DecimalField':      'decimal(%(max_digits)s, %(decimal_places)s)',
-        'FileField':         'varchar(%(max_length)s)',
-        'FilePathField':     'varchar(%(max_length)s)',
+        'FileField':         'nvarchar(%(max_length)s)',
+        'FilePathField':     'nvarchar(%(max_length)s)',
         'FloatField':        'float',
         'IntegerField':      'int',
         'BigIntegerField':   'bigint',
-        'IPAddressField':    'varchar(15)',
-        'GenericIPAddressField': 'varchar(39)',
+        'IPAddressField':    'nvarchar(15)',
+        'GenericIPAddressField': 'nvarchar(39)',
         'NullBooleanField':  'int',
         'OneToOneField':     'int',
         'PositiveIntegerField': 'int',
         'PositiveSmallIntegerField': 'smallint',
-        'SlugField':         'varchar(%(max_length)s)',
+        'SlugField':         'nvarchar(%(max_length)s)',
         'SmallIntegerField': 'smallint',
         'TextField':         'nclob',
         'TimeField':         'time',
@@ -78,7 +78,7 @@ class DatabaseCreation(BaseDatabaseCreation):
                     [style.SQL_FIELD(qn(opts.get_field(f).column))
                      for f in field_constraints]))
 
-        full_statement = [style.SQL_KEYWORD('CREATE TABLE') + ' ' +
+        full_statement = [style.SQL_KEYWORD('CREATE COLUMN TABLE') + ' ' +
                           style.SQL_TABLE(qn(opts.db_table)) + ' (']
         for i, line in enumerate(table_output): # Combine and add commas.
             full_statement.append(
