@@ -30,6 +30,25 @@ python setup.py install
 		}
 3. HANA doesn't support Timezone. Set USE_TZ=False in settings.py.
 
+Config
+------
+
+### Column/Row store
+Use the column/row-store class decorators to make sure that your models are using the correct HANA engine. If the models are not using any decorators the default behaviour will be a ROW-store column.
+```python
+from django.db import models
+from django_hana import column_store, row_store
+
+@column_store
+class ColumnStoreModel(models.Model):
+	some_field = models.CharField()
+	
+@row_store
+class RowStoreModel(models.Model):
+	some_field = models.CharField()
+```
+
+
 Log
 ------
 -	HANA doesn't return id after insert. Currently taking the curval of the sequence after insert. This may cause problems when too many inserts are done simultaneously. Needs rework. 
