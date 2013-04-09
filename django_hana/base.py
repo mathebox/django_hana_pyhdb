@@ -7,10 +7,10 @@ import sys
 from django.db import utils
 from django.db.backends import *
 from django.db.backends.signals import connection_created
-from django.db.backends.hana.operations import DatabaseOperations
-from django.db.backends.hana.client import DatabaseClient
-from django.db.backends.hana.creation import DatabaseCreation
-from django.db.backends.hana.introspection import DatabaseIntrospection
+from django_hana.operations import DatabaseOperations
+from django_hana.client import DatabaseClient
+from django_hana.creation import DatabaseCreation
+from django_hana.introspection import DatabaseIntrospection
 from django.utils.safestring import SafeText, SafeBytes
 from django.utils import six
 from django.utils.timezone import utc

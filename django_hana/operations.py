@@ -4,7 +4,7 @@ from django.db.backends import BaseDatabaseOperations
 from django.core.management.color import color_style
 
 class DatabaseOperations(BaseDatabaseOperations):
-    compiler_module = "django.db.backends.hana.compiler"
+    compiler_module = "django_hana.compiler"
 
     def __init__(self, connection):
         super(DatabaseOperations, self).__init__(connection)

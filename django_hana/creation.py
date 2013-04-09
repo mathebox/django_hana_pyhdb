@@ -1,6 +1,6 @@
 from django.db.backends.creation import BaseDatabaseCreation
 from django.db.backends.util import truncate_name
-
+import django_hana
 
 class DatabaseCreation(BaseDatabaseCreation):
     data_types = {
@@ -78,7 +78,10 @@ class DatabaseCreation(BaseDatabaseCreation):
                     [style.SQL_FIELD(qn(opts.get_field(f).column))
                      for f in field_constraints]))
 
-        full_statement = [style.SQL_KEYWORD('CREATE COLUMN TABLE') + ' ' +
+        ### check which column type
+        table_type = "COLUMN" if model.__name__ in django_hana.COLUMN_STORE else "ROW"
+
+        full_statement = [style.SQL_KEYWORD('CREATE ' + table_type + ' TABLE') + ' ' +
                           style.SQL_TABLE(qn(opts.db_table)) + ' (']
         for i, line in enumerate(table_output): # Combine and add commas.
             full_statement.append(
