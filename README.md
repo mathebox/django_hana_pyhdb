@@ -66,7 +66,6 @@ Log
 
 TODO
 -----
--	Create decorator for creating column store tables. Currently, all tables are created as row stores.
 -	Make a custom auto field for UUID
 -	Do more tests
 
