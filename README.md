@@ -11,12 +11,16 @@ Prerequisite
 
 Setup
 ------
-1. copy all files in django/db/backends/hana directory or anywhere you want, making sure it is in python path
+1. install the python package via setup.py
+```bash
+python setup.py install
+```
+
 2. The config in the Django project is as follows
 		
 		DATABASES = {
 		    'default': {
-		        'ENGINE': 'django.db.backends.hana', # or as per your python path
+		        'ENGINE': 'django_hana', # or as per your python path
 		        'NAME': '<SCHEMA_NAME>',                      # The schema to use. It will be created if doesn't exist
 		        'USER': '<USERNAME>',
 		        'PASSWORD': '<PASSWORD>',
@@ -25,6 +29,25 @@ Setup
 		    }
 		}
 3. HANA doesn't support Timezone. Set USE_TZ=False in settings.py.
+
+Config
+------
+
+### Column/Row store
+Use the column/row-store class decorators to make sure that your models are using the correct HANA engine. If the models are not using any decorators the default behaviour will be a ROW-store column.
+```python
+from django.db import models
+from django_hana import column_store, row_store
+
+@column_store
+class ColumnStoreModel(models.Model):
+	some_field = models.CharField()
+	
+@row_store
+class RowStoreModel(models.Model):
+	some_field = models.CharField()
+```
+
 
 Log
 ------
@@ -43,7 +66,6 @@ Log
 
 TODO
 -----
--	Create decorator for creating column store tables. Currently, all tables are created as row stores.
 -	Make a custom auto field for UUID
 -	Do more tests
 

@@ -865,23 +865,23 @@ class SQLInsertCompiler(SQLCompiler):
         if opts.pk in fields:
             pkinfields=True;
 
-	if opts.has_auto_field and not pkinfields:
-	    # get auto field name
-	    auto_field_column=opts.auto_field.db_column or opts.auto_field.column
-	    result.append('('+auto_field_column+',%s)' % ', '.join([qn(f.column) for f in fields]))
-	else:
-	    result.append('(%s)' % ', '.join([qn(f.column) for f in fields]))
+        if opts.has_auto_field and not pkinfields:
+            # get auto field name
+            auto_field_column=opts.auto_field.db_column or opts.auto_field.column
+            result.append('('+auto_field_column+',%s)' % ', '.join([qn(f.column) for f in fields]))
+        else:
+            result.append('(%s)' % ', '.join([qn(f.column) for f in fields]))
 
         if has_fields:
-	    params=[]
-	    for obj in self.query.objs:
-	    	vals=[]
-	    	for f in fields:
-		    val=f.get_db_prep_save(getattr(obj, f.attname) if self.query.raw else f.pre_save(obj, True), connection=self.connection)
-		    vals.append(val)
-		params.append(vals)	
+            params=[]
+            for obj in self.query.objs:
+                vals=[]
+                for f in fields:
+                    val=f.get_db_prep_save(getattr(obj, f.attname) if self.query.raw else f.pre_save(obj, True), connection=self.connection)
+                    vals.append(val)
+                params.append(vals)     
 
-	    values=params
+            values=params
         else:
             values = [[self.connection.ops.pk_default_value()] for obj in self.query.objs]
             params = [[]]
@@ -895,15 +895,15 @@ class SQLInsertCompiler(SQLCompiler):
             placeholders.append(p)
 
 
-	seq_func=''     
+        seq_func=''     
         # don't insert call to seq function if explicit pk field value is provided
-	if opts.has_auto_field and not pkinfields:  
-	    auto_field_column=opts.auto_field.db_column or opts.auto_field.column
-	    seq_func=self.connection.ops.get_seq_name(opts.db_table,auto_field_column)+'.nextval, '
-	    
-	    
+        if opts.has_auto_field and not pkinfields:  
+            auto_field_column=opts.auto_field.db_column or opts.auto_field.column
+            seq_func=self.connection.ops.get_seq_name(opts.db_table,auto_field_column)+'.nextval, '
+            
+            
         return [
-	    (" ".join(result + ["VALUES ("+seq_func+"%s)" % ", ".join(p)]), vals)
+            (" ".join(result + ["VALUES ("+seq_func+"%s)" % ", ".join(p)]), vals)
             for p, vals in izip(placeholders, params)
         ]
 

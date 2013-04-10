@@ -28,7 +28,7 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         return [row[0] for row in cursor.fetchall()]
 
     def table_name_converter(self, name):
-	return unicode(name.upper())
+        return unicode(name.upper())
 
     def get_table_description(self, cursor, table_name):
         "Returns a description of the table, with the DB-API cursor.description interface."

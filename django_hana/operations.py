@@ -4,21 +4,21 @@ from django.db.backends import BaseDatabaseOperations
 from django.core.management.color import color_style
 
 class DatabaseOperations(BaseDatabaseOperations):
-    compiler_module = "django.db.backends.hana.compiler"
+    compiler_module = "django_hana.compiler"
 
     def __init__(self, connection):
         super(DatabaseOperations, self).__init__(connection)
     
     def get_seq_name(self,table,column):
-	return self.connection.default_schema+"_"+table+"_"+column+"_seq"
+        return self.connection.default_schema+"_"+table+"_"+column+"_seq"
         
     def autoinc_sql(self, table, column):
-	seq_name=self.get_seq_name(table,column)
-	seq_sql="""
+        seq_name=self.get_seq_name(table,column)
+        seq_sql="""
 CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM %(table)s
 """ % locals()
-	return [seq_sql]
-	
+        return [seq_sql]
+        
     def date_extract_sql(self, lookup_type, field_name):
         if lookup_type == 'week_day':
             # For consistency across backends, we return Sunday=1, Saturday=7.
@@ -96,7 +96,7 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
             Returns the maximum length of table and column names, or None if there
             is no limit."""
         return 127
-		
+                
     def distinct_sql(self, fields):
         if fields:
             return 'DISTINCT (%s)' % ', '.join(fields)
@@ -104,7 +104,7 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
             return 'DISTINCT'
 
     def start_transaction_sql(self):
-	return ""
+        return ""
 
     def last_insert_id(self, cursor, table_name, pk_name):
         """
@@ -114,7 +114,7 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
         This method also receives the table name and the name of the primary-key
         column.
         """
-	cursor.execute('select '+self.connection.ops.get_seq_name(table_name,pk_name)+'.currval from dummy')
+        cursor.execute('select '+self.connection.ops.get_seq_name(table_name,pk_name)+'.currval from dummy')
         return cursor.fetchone()[0]
 
     def value_to_db_datetime(self, value):

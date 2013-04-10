@@ -1,28 +1,28 @@
 from django.db.backends.creation import BaseDatabaseCreation
 from django.db.backends.util import truncate_name
-
+import django_hana
 
 class DatabaseCreation(BaseDatabaseCreation):
     data_types = {
         'AutoField':         'int',
         'BooleanField':      'tinyint',
-        'CharField':         'varchar(%(max_length)s)',
-        'CommaSeparatedIntegerField': 'varchar(%(max_length)s)',
+        'CharField':         'nvarchar(%(max_length)s)',
+        'CommaSeparatedIntegerField': 'nvarchar(%(max_length)s)',
         'DateField':         'date',
         'DateTimeField':     'timestamp',
         'DecimalField':      'decimal(%(max_digits)s, %(decimal_places)s)',
-        'FileField':         'varchar(%(max_length)s)',
-        'FilePathField':     'varchar(%(max_length)s)',
+        'FileField':         'nvarchar(%(max_length)s)',
+        'FilePathField':     'nvarchar(%(max_length)s)',
         'FloatField':        'float',
         'IntegerField':      'int',
         'BigIntegerField':   'bigint',
-        'IPAddressField':    'varchar(15)',
-        'GenericIPAddressField': 'varchar(39)',
+        'IPAddressField':    'nvarchar(15)',
+        'GenericIPAddressField': 'nvarchar(39)',
         'NullBooleanField':  'int',
         'OneToOneField':     'int',
         'PositiveIntegerField': 'int',
         'PositiveSmallIntegerField': 'smallint',
-        'SlugField':         'varchar(%(max_length)s)',
+        'SlugField':         'nvarchar(%(max_length)s)',
         'SmallIntegerField': 'smallint',
         'TextField':         'nclob',
         'TimeField':         'time',
@@ -78,7 +78,10 @@ class DatabaseCreation(BaseDatabaseCreation):
                     [style.SQL_FIELD(qn(opts.get_field(f).column))
                      for f in field_constraints]))
 
-        full_statement = [style.SQL_KEYWORD('CREATE TABLE') + ' ' +
+        ### check which column type
+        table_type = "COLUMN" if model.__name__ in django_hana.COLUMN_STORE else "ROW"
+
+        full_statement = [style.SQL_KEYWORD('CREATE ' + table_type + ' TABLE') + ' ' +
                           style.SQL_TABLE(qn(opts.db_table)) + ' (']
         for i, line in enumerate(table_output): # Combine and add commas.
             full_statement.append(
@@ -89,8 +92,8 @@ class DatabaseCreation(BaseDatabaseCreation):
                 opts.db_tablespace)
             if tablespace_sql:
                 full_statement.append(tablespace_sql)
-	#HANA complains with semicolon at the end
-	#full_statement.append(';')
+        #HANA complains with semicolon at the end
+        #full_statement.append(';')
         final_output.append('\n'.join(full_statement))
 
         if opts.has_auto_field:
@@ -106,14 +109,14 @@ class DatabaseCreation(BaseDatabaseCreation):
         return final_output, pending_references
 
 
-	
+        
     def sql_for_inline_foreign_key_references(self, field, known_models, style):
         """
         Return the SQL snippet defining the foreign key reference for a field.
-		Foreign key not supported
+                Foreign key not supported
         """
         return [],False
-	
+        
     def sql_destroy_model(self, model, references_to_delete, style):
         """
             Return the DROP TABLE and restraint dropping statements for a single
@@ -130,7 +133,7 @@ class DatabaseCreation(BaseDatabaseCreation):
             if ds:
                 output.append(ds)
         return output
-	
+        
     def _create_test_db(self, verbosity, autoclobber):
         """
         Internal implementation - creates the test db tables.
@@ -173,7 +176,7 @@ class DatabaseCreation(BaseDatabaseCreation):
                 sys.exit(1)
 
         return test_database_name
-		
+                
     def _destroy_test_db(self, test_database_name, verbosity):
         """
         Internal implementation - remove the test db tables.
@@ -206,7 +209,7 @@ class DatabaseCreation(BaseDatabaseCreation):
             else:
                 tablespace_sql = ''
             i_name = '%s_%s' % (model._meta.db_table, self._digest(f.column))
-	    #HANA complains with semicolon at the end
+            #HANA complains with semicolon at the end
             output = [style.SQL_KEYWORD('CREATE INDEX') + ' ' +
                 style.SQL_TABLE(qn(truncate_name(
                     i_name, self.connection.ops.max_name_length()))) + ' ' +
