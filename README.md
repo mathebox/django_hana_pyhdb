@@ -1,6 +1,6 @@
 Django DB Backend for SAP HANA
 ==============================
-Under Development
+Ready for use.
 
 Prerequisite
 ------------
@@ -51,7 +51,9 @@ class RowStoreModel(models.Model):
 
 Log
 ------
--	HANA doesn't return id after insert. Currently taking the curval of the sequence after insert. This may cause problems when too many inserts are done simultaneously. Needs rework. 
+-	No showstoppers. Ready for release. Yes!!
+-	Just found out, sequences gives values based on current session. After calling nextval in the current session, currval will always return the same value that was generated before in the current session irrespective of any other concurrent insert.
+-	[Fixed]HANA doesn't return id after insert. Currently taking the curval of the sequence after insert. This may cause problems when too many inserts are done simultaneously. Needs rework. 
 	May be grab the seq's nextval while constructing insert query and use it in place of id and return it after insert is done.
 -	Tested with models in official django tutorial and Models References. All queries worked. 
 -	Currently, executes set schema on every cursor creation. Prefixing each table name with schema name is more efficient. Needs rework.
