@@ -11,8 +11,6 @@ from django_hana.operations import DatabaseOperations
 from django_hana.client import DatabaseClient
 from django_hana.creation import DatabaseCreation
 from django_hana.introspection import DatabaseIntrospection
-from django.utils.safestring import SafeText, SafeBytes
-from django.utils import six
 from django.utils.timezone import utc
 from time import time
 
@@ -255,4 +253,5 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             try:
                 return self.connection.commit()
             except Database.IntegrityError as e:
-                six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
+                ### TODO: reraise instead of raise - six.reraise was deleted due to incompability with django 1.4
+                raise
