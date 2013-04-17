@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='django_hana',
-      version='0.1',
+      version='1.0',
       description='SAP HANA backend for Django 1.4',
       author='Kapil Ratnani',
       author_email='kapil.ratnani@iiitb.net',
