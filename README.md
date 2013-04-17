@@ -1,6 +1,6 @@
 Django DB Backend for SAP HANA
 ==============================
-Under Development
+Ready for use.
 
 Prerequisite
 ------------
