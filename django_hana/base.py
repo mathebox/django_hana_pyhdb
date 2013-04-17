@@ -205,10 +205,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.default_schema=settings_dict['NAME']
             # make it upper case
             self.default_schema=self.default_schema.upper()
-            logger.info('DB Connected')
         cursor = self.connection.cursor()
         self.create_or_set_default_schema(cursor)
-        logger.info('Cursor created')
         return cursor
 
     def cursor(self):
