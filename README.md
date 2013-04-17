@@ -22,8 +22,8 @@ python setup.py install
 ```python		
 DATABASES = {
     'default': {
-        'ENGINE': 'django_hana', # or as per your python path
-        'NAME': '<SCHEMA_NAME>',                      # The schema to use. It will be created if doesn't exist
+        'ENGINE': 'django_hana',           # or as per your python path
+        'NAME': '<SCHEMA_NAME>',           # The schema to use. It will be created if doesn't exist
         'USER': '<USERNAME>',
         'PASSWORD': '<PASSWORD>',
         'HOST': '<HOSTNAME>',                      
