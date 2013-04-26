@@ -13,24 +13,24 @@ Setup
 ------
 1. install the python package via setup.py
 
-```bash
-python setup.py install
-```
+	```bash
+	python setup.py install
+	```
 
 2. The config in the Django project is as follows
 
-```python		
-DATABASES = {
-    'default': {
-        'ENGINE': 'django_hana',           # or as per your python path
-        'NAME': '<SCHEMA_NAME>',           # The schema to use. It will be created if doesn't exist
-        'USER': '<USERNAME>',
-        'PASSWORD': '<PASSWORD>',
-        'HOST': '<HOSTNAME>',                      
-        'PORT': '3<INSTANCE_NUMBER>15',               
-    }
-}
-```
+	```python		
+	DATABASES = {
+    	'default': {
+        	'ENGINE': 'django_hana',           # or as per your python path
+        	'NAME': '<SCHEMA_NAME>',           # The schema to use. It will be created if doesn't exist
+        	'USER': '<USERNAME>',
+        	'PASSWORD': '<PASSWORD>',
+        	'HOST': '<HOSTNAME>',                      
+        	'PORT': '3<INSTANCE_NUMBER>15',               
+    	}
+	}
+	```
 3. HANA doesn't support Timezone. Set USE_TZ=False in settings.py.
 
 Config
