@@ -132,3 +132,7 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
                     value.minute,value.second,value.microsecond))
         return unicode(value)
 
+    def lookup_cast(self, lookup_type):
+        if lookup_type in ('iexact', 'icontains', 'istartswith', 'iendswith'):
+            return "UPPER(%s)"
+        return "%s"
