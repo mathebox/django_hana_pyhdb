@@ -54,6 +54,8 @@ class RowStoreModel(models.Model):
 
 Log
 ------
+-	Fixed bug: transaction were not working. It stayed in autocommit even after requesting for manual commit mode.
+- 	Fixed bug: case insensitive text search
 -	No showstoppers. Ready for release. Yes!!
 -	Just found out, sequences gives values based on current session. After calling nextval in the current session, currval will always return the same value that was generated before in the current session irrespective of any other concurrent insert.
 -	[Fixed]HANA doesn't return id after insert. Currently taking the curval of the sequence after insert. This may cause problems when too many inserts are done simultaneously. Needs rework. 

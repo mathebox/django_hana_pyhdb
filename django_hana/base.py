@@ -149,8 +149,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
 
         self.features = DatabaseFeatures(self)
-        autocommit = self.settings_dict["OPTIONS"].get('autocommit', False)
-        self.features.uses_autocommit = autocommit
 
         self.ops = DatabaseOperations(self)
         self.client = DatabaseClient(self)
@@ -188,8 +186,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                 'database': settings_dict['NAME'],
             }
             conn_params.update(settings_dict['OPTIONS'])
-            if 'autocommit' in conn_params:
-                del conn_params['autocommit']
             if settings_dict['USER']:
                 conn_params['user'] = settings_dict['USER']
             if settings_dict['PASSWORD']:
@@ -236,15 +232,15 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         the same transaction is visible across all the queries.
         """
         if self.features.uses_autocommit and managed:
-            self.connection.setautocommit(auto=False);
+            self.connection.setautocommit(auto=False)
 
     def _leave_transaction_management(self, managed):
         """
         If the normal operating mode is "autocommit", switch back to that when
         leaving transaction management.
         """
-        if self.features.uses_autocommit and not managed:
-            self.connection.setautocommit(auto=True);
+        if self.features.uses_autocommit and managed:
+            self.connection.setautocommit(auto=True)
 
     def _commit(self):
         if self.connection is not None:
