@@ -174,34 +174,38 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             )
             raise
 
+    def connect(self):
+        if not self.settings_dict['NAME']:
+            from django.core.exceptions import ImproperlyConfigured
+            raise ImproperlyConfigured(
+                "settings.DATABASES is improperly configured. "
+                "Please supply the NAME value.")
+        conn_params = {}
+        if self.settings_dict['USER']:
+            conn_params['user'] = self.settings_dict['USER']
+        if self.settings_dict['PASSWORD']:
+            conn_params['password'] = self.settings_dict['PASSWORD']
+        if self.settings_dict['HOST']:
+            conn_params['host'] = self.settings_dict['HOST']
+        if self.settings_dict['PORT']:
+            conn_params['port'] = self.settings_dict['PORT']
+        self.connection = Database.connect(address=conn_params['host'],port=int(conn_params['port']),user=conn_params['user'],password=conn_params['password'])
+        # set autocommit on by default
+        self.connection.setautocommit(auto=True)
+        self.default_schema=self.settings_dict['NAME']
+        # make it upper case
+        self.default_schema=self.default_schema.upper()
+
+
     def _cursor(self):
-        settings_dict = self.settings_dict
-        if self.connection is None:
-            if not settings_dict['NAME']:
-                from django.core.exceptions import ImproperlyConfigured
-                raise ImproperlyConfigured(
-                    "settings.DATABASES is improperly configured. "
-                    "Please supply the NAME value.")
-            conn_params = {
-                'database': settings_dict['NAME'],
-            }
-            conn_params.update(settings_dict['OPTIONS'])
-            if settings_dict['USER']:
-                conn_params['user'] = settings_dict['USER']
-            if settings_dict['PASSWORD']:
-                conn_params['password'] = settings_dict['PASSWORD']
-            if settings_dict['HOST']:
-                conn_params['host'] = settings_dict['HOST']
-            if settings_dict['PORT']:
-                conn_params['port'] = settings_dict['PORT']
-            self.connection = Database.connect(address=conn_params['host'],port=int(conn_params['port']),user=conn_params['user'],password=conn_params['password'])
-            self.connection.setautocommit(auto=True)
-            self.default_schema=settings_dict['NAME']
-            # make it upper case
-            self.default_schema=self.default_schema.upper()
+        self.ensure_connection()
         cursor = self.connection.cursor()
         self.create_or_set_default_schema(cursor)
         return cursor
+
+    def ensure_connection(self):
+        if self.connection is None:
+            self.connect()
 
     def cursor(self):
         self.validate_thread_sharing()
@@ -227,18 +231,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         cursor.execute("set schema "+self.default_schema)
     
     def _enter_transaction_management(self, managed):
-        """
-        Switch the isolation level when needing transaction support, so that
-        the same transaction is visible across all the queries.
-        """
+        self.ensure_connection()
         if self.features.uses_autocommit and managed:
             self.connection.setautocommit(auto=False)
 
     def _leave_transaction_management(self, managed):
-        """
-        If the normal operating mode is "autocommit", switch back to that when
-        leaving transaction management.
-        """
         if self.features.uses_autocommit and managed:
             self.connection.setautocommit(auto=True)
 
