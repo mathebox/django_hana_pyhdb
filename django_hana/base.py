@@ -231,13 +231,33 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         cursor.execute("set schema "+self.default_schema)
     
     def _enter_transaction_management(self, managed):
+        """
+            Disables autocommit on entering a transaction
+        """
         self.ensure_connection()
         if self.features.uses_autocommit and managed:
             self.connection.setautocommit(auto=False)
 
-    def _leave_transaction_management(self, managed):
-        if self.features.uses_autocommit and managed:
+    def leave_transaction_management(self):
+        """
+            on leaving a transaction restore autocommit behavior
+        """
+        try:
+            if self.transaction_state:
+                del self.transaction_state[-1]
+            else:
+                raise TransactionManagementError("This code isn't under transaction "
+                    "management")
+            if self._dirty:
+                self.rollback()
+                raise TransactionManagementError("Transaction managed block ended with "
+                    "pending COMMIT/ROLLBACK")
+        except:
+            raise
+        finally:
+            # restore autocommit behavior
             self.connection.setautocommit(auto=True)
+        self._dirty = False
 
     def _commit(self):
         if self.connection is not None:

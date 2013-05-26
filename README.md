@@ -54,6 +54,7 @@ class RowStoreModel(models.Model):
 
 Log
 ------
+-	On leaving transaction ensuring autocommit is back to enabled
 -	Fixed bug: transaction were not working. It stayed in autocommit even after requesting for manual commit mode.
 - 	Fixed bug: case insensitive text search
 -	No showstoppers. Ready for release. Yes!!
