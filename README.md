@@ -76,6 +76,7 @@ TODO
 -----
 -	Make a custom auto field for UUID
 -	Do more tests
+-	Try Foreign Keys
 
 Disclaimer
 --------------
