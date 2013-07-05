@@ -97,11 +97,6 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
             is no limit."""
         return 127
                 
-    def distinct_sql(self, fields):
-        if fields:
-            return 'DISTINCT (%s)' % ', '.join(fields)
-        else:
-            return 'DISTINCT'
 
     def start_transaction_sql(self):
         return ""
