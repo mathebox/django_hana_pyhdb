@@ -52,6 +52,7 @@ class CursorWrapper(object):
     def __init__(self, cursor, db):
         self.cursor = cursor
         self.db = db
+        self.is_hana = True
 
     def set_dirty(self):
         if self.db.is_managed():
@@ -208,10 +209,13 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.connect()
 
     def cursor(self):
-        self.validate_thread_sharing()
-        if (self.use_debug_cursor or
-            (self.use_debug_cursor is None and settings.DEBUG)):
-            cursor = self.make_debug_cursor(self._cursor())
+        result = super (DatabaseWrapper, self).cursor ()
+        #self.validate_thread_sharing()
+        #if (self.use_debug_cursor or
+            #(self.use_debug_cursor is None and settings.DEBUG)):
+            #cursor = self.make_debug_cursor(self._cursor())
+        if getattr(result,'is_hana',False):
+            cursor = result
         else:
             cursor = CursorWrapper(self._cursor(), self)
         return cursor
@@ -229,7 +233,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if not res:
             cursor.execute("create schema %s" % self.default_schema)
         cursor.execute("set schema "+self.default_schema)
-    
+
     def _enter_transaction_management(self, managed):
         """
             Disables autocommit on entering a transaction
