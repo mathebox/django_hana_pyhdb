@@ -8,23 +8,32 @@ class DatabaseOperations(BaseDatabaseOperations):
 
     def __init__(self, connection):
         super(DatabaseOperations, self).__init__(connection)
-    
+
     def get_seq_name(self,table,column):
         return self.connection.default_schema+"_"+table+"_"+column+"_seq"
-        
+
     def autoinc_sql(self, table, column):
         seq_name=self.get_seq_name(table,column)
         seq_sql="""
 CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM %(table)s
 """ % locals()
         return [seq_sql]
-        
+
     def date_extract_sql(self, lookup_type, field_name):
         if lookup_type == 'week_day':
             # For consistency across backends, we return Sunday=1, Saturday=7.
             return "MOD(WEEKDAY (%s) + 2,7)" % field_name
         else:
             return "EXTRACT(%s FROM %s)" % (lookup_type, field_name)
+
+    def date_trunc_sql(self, lookup_type, field_name):
+        # very low tech, code should be optimized
+        ltypes = {'year':'YYYY','month':'YYYY-MM','day':'YYYY-MM-DD'}
+        cur_type = ltypes.get(lookup_type)
+        if not cur_type:
+            return field_name
+        sql = "TO_DATE(TO_VARCHAR(%s, '%s'))" % (field_name, cur_type)
+        return sql
 
     def no_limit_value(self):
         return None
@@ -47,8 +56,8 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
         for sequence_info in sequences:
             table_name = sequence_info['table']
             column_name = sequence_info['column']
-            seq_name=self.get_seq_name(table,column)
-            sql.append("ALTER SEQUENCE "+seq_name+" RESET BY SELECT IFNULL(MAX("+column_name+"),0) + 1 from "+table)
+            seq_name=self.get_seq_name(table_name,column_name)
+            sql.append("ALTER SEQUENCE "+seq_name+" RESET BY SELECT IFNULL(MAX("+column_name+"),0) + 1 from "+table_name + ';')
         return sql
 
     def sequence_reset_sql(self, style, model_list):
@@ -96,7 +105,7 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
             Returns the maximum length of table and column names, or None if there
             is no limit."""
         return 127
-                
+
 
     def start_transaction_sql(self):
         return ""

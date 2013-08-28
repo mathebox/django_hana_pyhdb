@@ -80,11 +80,9 @@ class CursorWrapper(object):
 
     def _replace_params(self,sql,params_count):
         """
-            converts %s style placeholders to ?
+        converts %s style placeholders to ?
         """
-        str_placeholders='?' * params_count
-
-        return sql % tuple([p for p in str_placeholders]);
+        return sql % tuple('?'*params_count)
 
 
 class CursorDebugWrapper(CursorWrapper):
@@ -209,11 +207,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.connect()
 
     def cursor(self):
+        # Call parent, in order to support cursor overriding from apps like Django Debug Toolbar
+        # self.BaseDatabaseWrapper API is very asymetrical here - uses make_debug_cursor() for the
+        # debug cursor, but directly instantiates urils.CursorWrapper for the regular one
         result = super (DatabaseWrapper, self).cursor ()
-        #self.validate_thread_sharing()
-        #if (self.use_debug_cursor or
-            #(self.use_debug_cursor is None and settings.DEBUG)):
-            #cursor = self.make_debug_cursor(self._cursor())
         if getattr(result,'is_hana',False):
             cursor = result
         else:
