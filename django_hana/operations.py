@@ -140,3 +140,12 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
         if lookup_type in ('iexact', 'icontains', 'istartswith', 'iendswith'):
             return "UPPER(%s)"
         return "%s"
+
+    def convert_values(self, value, field):
+        """
+        Type conversion for boolean field. Keping values as 0/1 confuses
+        the modelforms.
+        """
+        if (field and field.get_internal_type() in ("BooleanField", "NullBooleanField") and value in (0, 1)):
+            value = bool(value)
+        return value

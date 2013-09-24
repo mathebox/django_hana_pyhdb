@@ -13,7 +13,18 @@ from django.db import models
 from django.db.models.sql import compiler
 
 class SQLCompiler(compiler.SQLCompiler):
-    pass
+    def resolve_columns(self, row, fields=()):
+        """
+        Taken from fox:
+        https://github.com/django/django/commit/9f6859e1ea
+
+        Basically a hook, where we call convert_values() which would turn 0/1 to Booleans.
+        """
+        values = []
+        index_extra_select = len(self.query.extra_select.keys())
+        for value, field in map(None, row[index_extra_select:], fields):
+            values.append(self.query.convert_values(value, field, connection=self.connection))
+        return row[:index_extra_select] + tuple(values)
 
 class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
     def as_sql(self):
@@ -23,8 +34,8 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
 
         has_fields = bool(self.query.fields)
         fields = self.query.fields if has_fields else [opts.pk]
-        
-        pkinfields=False #when explicit pk value is provided 
+
+        pkinfields=False #when explicit pk value is provided
         if opts.pk in fields:
             pkinfields=True;
 
@@ -42,7 +53,7 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
                 for f in fields:
                     val=f.get_db_prep_save(getattr(obj, f.attname) if self.query.raw else f.pre_save(obj, True), connection=self.connection)
                     vals.append(val)
-                params.append(vals)     
+                params.append(vals)
 
             values=params
         else:
@@ -58,13 +69,13 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
             placeholders.append(p)
 
 
-        seq_func=''     
+        seq_func=''
         # don't insert call to seq function if explicit pk field value is provided
-        if opts.has_auto_field and not pkinfields:  
+        if opts.has_auto_field and not pkinfields:
             auto_field_column=opts.auto_field.db_column or opts.auto_field.column
             seq_func=self.connection.ops.get_seq_name(opts.db_table,auto_field_column)+'.nextval, '
-            
-            
+
+
         return [
             (" ".join(result + ["VALUES ("+seq_func+"%s)" % ", ".join(p)]), vals)
             for p, vals in izip(placeholders, params)
