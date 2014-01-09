@@ -194,13 +194,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.default_schema=self.settings_dict['NAME']
         # make it upper case
         self.default_schema=self.default_schema.upper()
-
+        self.create_or_set_default_schema()
 
     def _cursor(self):
         self.ensure_connection()
-        cursor = self.connection.cursor()
-        self.create_or_set_default_schema(cursor)
-        return cursor
+        return self.connection.cursor()
 
     def ensure_connection(self):
         if self.connection is None:
@@ -221,10 +219,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         return CursorDebugWrapper(cursor, self)
 
 
-    def create_or_set_default_schema(self,cursor):
+    def create_or_set_default_schema(self):
         """
             create if doesn't exist and then make it default
         """
+        cursor = self.cursor()
         cursor.execute("select (1) as a from schemas where schema_name='%s'" % self.default_schema)
         res=cursor.fetchone()
         if not res:
