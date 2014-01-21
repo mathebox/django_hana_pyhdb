@@ -13,7 +13,9 @@ class DatabaseOperations(BaseDatabaseOperations):
         return self.connection.default_schema+"_"+table+"_"+column+"_seq"
 
     def autoinc_sql(self, table, column):
-        seq_name=self.get_seq_name(table,column)
+        seq_name=self.quote_name(self.get_seq_name(table,column))
+        column=self.quote_name(column)
+        table=self.quote_name(table)
         seq_sql="""
 CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM %(table)s
 """ % locals()
@@ -39,9 +41,7 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
         return None
 
     def quote_name(self, name):
-        #don't quote
-        return name
-
+        return '"%s"' % name.replace('"', '""').upper()
 
     def sql_flush(self, style, tables, sequences):
         if tables:
