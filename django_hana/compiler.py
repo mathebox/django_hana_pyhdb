@@ -75,6 +75,7 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
             auto_field_column=opts.auto_field.db_column or opts.auto_field.column
             seq_func=self.connection.ops.get_seq_name(opts.db_table,auto_field_column)+'.nextval, '
 
+        params = self.connection.ops.modify_insert_params(placeholders, params)
 
         return [
             (" ".join(result + ["VALUES ("+seq_func+"%s)" % ", ".join(p)]), vals)
@@ -86,7 +87,10 @@ class SQLDeleteCompiler(compiler.SQLDeleteCompiler,SQLCompiler):
     pass
 
 class SQLUpdateCompiler(compiler.SQLUpdateCompiler,SQLCompiler):
-    pass
+    def as_sql(self):
+        result, params = super(SQLUpdateCompiler, self).as_sql()
+        update_params = self.connection.ops.modify_update_params(params)
+        return result, update_params
 
 class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
     pass

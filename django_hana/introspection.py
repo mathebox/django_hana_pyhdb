@@ -25,7 +25,7 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
     def get_table_list(self, cursor):
         "Returns a list of table names in the current database."
         cursor.execute("select table_name from tables where schema_name='%s'" % self.connection.default_schema)
-        result = [row[0] for row in cursor.fetchall()]
+        result = [row[0].lower() for row in cursor.fetchall()]
         return result
 
     def table_name_converter(self, name):

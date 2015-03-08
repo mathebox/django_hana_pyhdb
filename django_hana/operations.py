@@ -149,3 +149,17 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
         if (field and field.get_internal_type() in ("BooleanField", "NullBooleanField") and value in (0, 1)):
             value = bool(value)
         return value
+
+    def modify_insert_params(self, placeholders, params):
+        insert_param_groups = []
+        for p in params:
+            insert_param_groups.append(map(self.sanitize_bool, p))
+        return insert_param_groups
+
+    def modify_update_params(self, params):
+        return map(self.sanitize_bool, params)
+
+    def sanitize_bool(self, param):
+        if type(param) is bool:
+            return 1 if param else 0
+        return param

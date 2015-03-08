@@ -7,7 +7,7 @@ import django_hana
 
 class DatabaseCreation(BaseDatabaseCreation):
     data_types = {
-        'AutoField':         'int',
+        'AutoField':         'integer',
         'BooleanField':      'tinyint',
         'CharField':         'nvarchar(%(max_length)s)',
         'CommaSeparatedIntegerField': 'nvarchar(%(max_length)s)',
@@ -17,13 +17,13 @@ class DatabaseCreation(BaseDatabaseCreation):
         'FileField':         'nvarchar(%(max_length)s)',
         'FilePathField':     'nvarchar(%(max_length)s)',
         'FloatField':        'float',
-        'IntegerField':      'int',
+        'IntegerField':      'integer',
         'BigIntegerField':   'bigint',
         'IPAddressField':    'nvarchar(15)',
         'GenericIPAddressField': 'nvarchar(39)',
-        'NullBooleanField':  'int',
-        'OneToOneField':     'int',
-        'PositiveIntegerField': 'int',
+        'NullBooleanField':  'integer',
+        'OneToOneField':     'integer',
+        'PositiveIntegerField': 'integer',
         'PositiveSmallIntegerField': 'smallint',
         'SlugField':         'nvarchar(%(max_length)s)',
         'SmallIntegerField': 'smallint',

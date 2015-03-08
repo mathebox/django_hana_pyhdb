@@ -11,17 +11,11 @@ from django_hana.operations import DatabaseOperations
 from django_hana.client import DatabaseClient
 from django_hana.creation import DatabaseCreation
 from django_hana.introspection import DatabaseIntrospection
+from django_hana.schema import DatabaseSchemaEditor
 from django.utils.timezone import utc
 from time import time
 
-try:
-    from hdbcli import dbapi as Database
-except ImportError as e:
-    from django.core.exceptions import ImproperlyConfigured
-    raise ImproperlyConfigured("Error loading SAP HANA Python driver: %s" % e)
-
-DatabaseError = Database.DatabaseError
-IntegrityError = Database.IntegrityError
+import pyhdb
 
 logger = logging.getLogger('django.db.backends')
 
@@ -56,7 +50,7 @@ class CursorWrapper(object):
         self.is_hana = True
 
     def set_dirty(self):
-        if self.db.is_managed():
+        if not self.db.get_autocommit():
             self.db.set_dirty()
 
     def __getattr__(self, attr):
@@ -69,39 +63,42 @@ class CursorWrapper(object):
     def __iter__(self):
         return iter(self.cursor)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        # self.cursor.close()
+        pass
+
 
     def execute(self, sql, params=()):
         """
             execute with replaced placeholders
         """
-        try:
-            self.cursor.execute(self._replace_params(sql,len(params) if params else 0),params)
-        except Database.IntegrityError as e:
-            six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
-        except Database.Error as e:
-            # Map some error codes to IntegrityError, since they seem to be
-            # misclassified and Django would prefer the more logical place.
-            if e[0] in self.codes_for_integrityerror:
-                six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
-            six.reraise(utils.DatabaseError, utils.DatabaseError(*tuple(e.args)), sys.exc_info()[2])
+        self.cursor.execute(sql, params)
+        # try:
+        #     self.cursor.execute(self._replace_params(sql,len(params) if params else 0),params)
+        # except Database.IntegrityError as e:
+        #     six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
+        # except Database.Error as e:
+        #     # Map some error codes to IntegrityError, since they seem to be
+        #     # misclassified and Django would prefer the more logical place.
+        #     if e[0] in self.codes_for_integrityerror:
+        #         six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
+        #     six.reraise(utils.DatabaseError, utils.DatabaseError(*tuple(e.args)), sys.exc_info()[2])
 
     def executemany(self, sql, param_list):
-        try:
-            self.cursor.executemany(self._replace_params(sql,len(param_list[0]) if param_list and len(param_list)>0 else 0),param_list)
-        except Database.IntegrityError as e:
-            six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
-        except Database.Error as e:
-            # Map some error codes to IntegrityError, since they seem to be
-            # misclassified and Django would prefer the more logical place.
-            if e[0] in self.codes_for_integrityerror:
-                six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
-            six.reraise(utils.DatabaseError, utils.DatabaseError(*tuple(e.args)), sys.exc_info()[2])
-
-    def _replace_params(self,sql,params_count):
-        """
-        converts %s style placeholders to ?
-        """
-        return sql % tuple('?'*params_count)
+        self.cursor.executemany(sql, param_list)
+        # try:
+        #     self.cursor.executemany(self._replace_params(sql,len(param_list[0]) if param_list and len(param_list)>0 else 0),param_list)
+        # except Database.IntegrityError as e:
+        #     six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
+        # except Database.Error as e:
+        #     # Map some error codes to IntegrityError, since they seem to be
+        #     # misclassified and Django would prefer the more logical place.
+        #     if e[0] in self.codes_for_integrityerror:
+        #         six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
+        #     six.reraise(utils.DatabaseError, utils.DatabaseError(*tuple(e.args)), sys.exc_info()[2])
 
 
 class CursorDebugWrapper(CursorWrapper):
@@ -178,19 +175,21 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.validate_thread_sharing()
         if self.connection is None:
             return
-        try:
-            self.connection.close()
-            self.connection = None
-        except Database.Error:
-            # In some cases (database restart, network connection lost etc...)
-            # the connection to the database is lost without giving Django a
-            # notification. If we don't set self.connection to None, the error
-            # will occur a every request.
-            self.connection = None
-            logger.warning('saphana error while closing the connection.',
-                exc_info=sys.exc_info()
-            )
-            raise
+        self.connection.close()
+        self.connection = None
+        # try:
+        #     self.connection.close()
+        #     self.connection = None
+        # except Database.Error:
+        #     # In some cases (database restart, network connection lost etc...)
+        #     # the connection to the database is lost without giving Django a
+        #     # notification. If we don't set self.connection to None, the error
+        #     # will occur a every request.
+        #     self.connection = None
+        #     logger.warning('saphana error while closing the connection.',
+        #         exc_info=sys.exc_info()
+        #     )
+        #     raise
 
     def connect(self):
         if not self.settings_dict['NAME']:
@@ -207,7 +206,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             conn_params['host'] = self.settings_dict['HOST']
         if self.settings_dict['PORT']:
             conn_params['port'] = self.settings_dict['PORT']
-        self.connection = Database.connect(address=conn_params['host'],port=int(conn_params['port']),user=conn_params['user'],password=conn_params['password'])
+        self.connection = pyhdb.connect(
+            host=conn_params['host'],
+            port=int(conn_params['port']),
+            user=conn_params['user'],
+            password=conn_params['password']
+        )
         # set autocommit on by default
         self.connection.setautocommit(auto=True)
         self.default_schema=self.settings_dict['NAME']
@@ -280,8 +284,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def _commit(self):
         if self.connection is not None:
-            try:
-                return self.connection.commit()
-            except Database.IntegrityError as e:
-                ### TODO: reraise instead of raise - six.reraise was deleted due to incompability with django 1.4
-                raise
+            return self.connection.commit()
+            # try:
+            #     return self.connection.commit()
+            # except Database.IntegrityError as e:
+            #     ### TODO: reraise instead of raise - six.reraise was deleted due to incompability with django 1.4
+            #     raise
+
+    def schema_editor(self, *args, **kwargs):
+        return DatabaseSchemaEditor(self, kwargs)
