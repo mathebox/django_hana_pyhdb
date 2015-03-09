@@ -1,7 +1,7 @@
 # Django DB Backend for SAP HANA
 - for Linux, Mac OS and Windows
 - build on top of [PyHDB](https://github.com/SAP/PyHDB)
-- major work done by [@kapilratnani](https://github.com/kapilratnani) 
+- original work done by [@kapilratnani](https://github.com/kapilratnani) (https://github.com/kapilratnani/django_hana)
 
 ## Setup
 1. install the python package via setup.py
