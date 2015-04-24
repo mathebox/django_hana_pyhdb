@@ -5,7 +5,9 @@ import logging
 import sys
 
 from django.db import utils
-from django.db.backends import *
+from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db.backends.base.features import BaseDatabaseFeatures
+from django.db.backends.base.validation import BaseDatabaseValidation
 from django.db.backends.signals import connection_created
 from django_hana.operations import DatabaseOperations
 from django_hana.client import DatabaseClient
@@ -142,7 +144,33 @@ class CursorDebugWrapper(CursorWrapper):
 
 
 class DatabaseWrapper(BaseDatabaseWrapper):
-    vendor = 'HANA'
+    vendor = 'hana'
+
+    data_types = {
+        'AutoField':         'integer',
+        'BooleanField':      'tinyint',
+        'CharField':         'nvarchar(%(max_length)s)',
+        'CommaSeparatedIntegerField': 'nvarchar(%(max_length)s)',
+        'DateField':         'date',
+        'DateTimeField':     'timestamp',
+        'DecimalField':      'decimal(%(max_digits)s, %(decimal_places)s)',
+        'FileField':         'nvarchar(%(max_length)s)',
+        'FilePathField':     'nvarchar(%(max_length)s)',
+        'FloatField':        'float',
+        'IntegerField':      'integer',
+        'BigIntegerField':   'bigint',
+        'IPAddressField':    'nvarchar(15)',
+        'GenericIPAddressField': 'nvarchar(39)',
+        'NullBooleanField':  'integer',
+        'OneToOneField':     'integer',
+        'PositiveIntegerField': 'integer',
+        'PositiveSmallIntegerField': 'smallint',
+        'SlugField':         'nvarchar(%(max_length)s)',
+        'SmallIntegerField': 'smallint',
+        'TextField':         'nclob',
+        'TimeField':         'time',
+    }
+
     operators = {
         'exact': '= %s',
         'iexact': '= UPPER(%s)',
@@ -213,7 +241,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             password=conn_params['password']
         )
         # set autocommit on by default
-        self.connection.setautocommit(auto=True)
+        self.set_autocommit(True)
         self.default_schema=self.settings_dict['NAME']
         # make it upper case
         self.default_schema=self.default_schema.upper()
@@ -223,9 +251,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.ensure_connection()
         return self.connection.cursor()
 
-    def ensure_connection(self):
-        if self.connection is None:
-            self.connect()
+    def _set_autocommit(self, autocommit):
+        self.connection.setautocommit(autocommit)
 
     def cursor(self):
         # Call parent, in order to support cursor overriding from apps like Django Debug Toolbar
@@ -241,6 +268,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     def make_debug_cursor(self, cursor):
         return CursorDebugWrapper(cursor, self)
 
+    def set_dirty(self):
+        pass
 
     def create_or_set_default_schema(self):
         """

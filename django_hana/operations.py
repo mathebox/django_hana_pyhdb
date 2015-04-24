@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from django.db.backends import BaseDatabaseOperations
+from django.db.backends.base.operations import BaseDatabaseOperations
 from django.core.management.color import color_style
 
 class DatabaseOperations(BaseDatabaseOperations):
@@ -136,7 +136,7 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
                     value.minute,value.second,value.microsecond))
         return unicode(value)
 
-    def lookup_cast(self, lookup_type):
+    def lookup_cast(self, lookup_type, internal_type=None):
         if lookup_type in ('iexact', 'icontains', 'istartswith', 'iendswith'):
             return "UPPER(%s)"
         return "%s"

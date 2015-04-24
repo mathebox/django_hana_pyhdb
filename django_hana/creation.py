@@ -1,35 +1,12 @@
 import sys
 import time
 
-from django.db.backends.creation import BaseDatabaseCreation
-from django.db.backends.util import truncate_name
+from django.db.backends.base.creation import BaseDatabaseCreation
+from django.db.backends.utils import truncate_name
+
 import django_hana
 
 class DatabaseCreation(BaseDatabaseCreation):
-    data_types = {
-        'AutoField':         'integer',
-        'BooleanField':      'tinyint',
-        'CharField':         'nvarchar(%(max_length)s)',
-        'CommaSeparatedIntegerField': 'nvarchar(%(max_length)s)',
-        'DateField':         'date',
-        'DateTimeField':     'timestamp',
-        'DecimalField':      'decimal(%(max_digits)s, %(decimal_places)s)',
-        'FileField':         'nvarchar(%(max_length)s)',
-        'FilePathField':     'nvarchar(%(max_length)s)',
-        'FloatField':        'float',
-        'IntegerField':      'integer',
-        'BigIntegerField':   'bigint',
-        'IPAddressField':    'nvarchar(15)',
-        'GenericIPAddressField': 'nvarchar(39)',
-        'NullBooleanField':  'integer',
-        'OneToOneField':     'integer',
-        'PositiveIntegerField': 'integer',
-        'PositiveSmallIntegerField': 'smallint',
-        'SlugField':         'nvarchar(%(max_length)s)',
-        'SmallIntegerField': 'smallint',
-        'TextField':         'nclob',
-        'TimeField':         'time',
-    }
 
     def sql_create_model(self, model, style, known_models=set()):
         """
@@ -200,7 +177,7 @@ class DatabaseCreation(BaseDatabaseCreation):
         """
         Return the CREATE INDEX SQL statements for a single model field.
         """
-        from django.db.backends.util import truncate_name
+        from django.db.backends.utils import truncate_name
 
         if f.db_index and not f.unique:
             qn = self.connection.ops.quote_name

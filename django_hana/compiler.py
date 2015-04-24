@@ -2,11 +2,10 @@ from itertools import izip
 
 from django.core.exceptions import FieldError
 from django.db import transaction
-from django.db.backends.util import truncate_name
+from django.db.backends.utils import truncate_name
 from django.db.models.query_utils import select_related_descend
 from django.db.models.sql.constants import *
 from django.db.models.sql.datastructures import EmptyResultSet
-from django.db.models.sql.expressions import SQLEvaluator
 from django.db.models.sql.query import get_order_dir, Query
 from django.db.utils import DatabaseError
 from django.db import models
@@ -93,7 +92,4 @@ class SQLUpdateCompiler(compiler.SQLUpdateCompiler,SQLCompiler):
         return result, update_params
 
 class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
-    pass
-
-class SQLDateCompiler(compiler.SQLDateCompiler,SQLCompiler):
     pass
