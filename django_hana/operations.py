@@ -1,10 +1,53 @@
 from __future__ import unicode_literals
 
 from django.db.backends.base.operations import BaseDatabaseOperations
+from django.contrib.gis.geometry.backend import Geometry
+from django.contrib.gis.db.backends.base.adapter import WKTAdapter
+from django.contrib.gis.db.backends.base.operations import \
+    BaseSpatialOperations
+from django.contrib.gis.db.backends.utils import SpatialOperator
+from django.contrib.gis.measure import Distance
 from django.core.management.color import color_style
+from django.utils import six
+from django.utils.encoding import force_bytes, force_text
 
-class DatabaseOperations(BaseDatabaseOperations):
+
+class HanaSpatialOperator(SpatialOperator):
+    sql_template = "%(lhs)s.%(func)s(%(rhs)s)"
+
+class HanaIsOneSpatialOperator(SpatialOperator):
+    sql_template = "%(lhs)s.%(func)s(%(rhs)s) = 1"
+
+class HanaIsValueSpatialOperator(SpatialOperator):
+    sql_template = "%(lhs)s.%(func)s(%(rhs)s) %(op)s %%s"
+
+
+class DatabaseOperations(BaseDatabaseOperations, BaseSpatialOperations):
     compiler_module = "django_hana.compiler"
+
+    Adapter = WKTAdapter
+    Adaptor = Adapter  # Backwards-compatibility alias.
+
+    gis_operators = {
+        'contains': HanaIsOneSpatialOperator(func='ST_CONTAINS'),
+        'coveredby': HanaIsOneSpatialOperator(func='ST_COVEREDBY'),
+        'covers': HanaIsOneSpatialOperator(func='ST_COVERS'),
+        'crosses': HanaIsOneSpatialOperator(func='ST_CROSSES'),
+        'disjoint': HanaIsOneSpatialOperator(func='ST_DISJOINT'),
+        'distance': HanaIsValueSpatialOperator(func='ST_DISTANCE', op='='),
+        'distance_gt': HanaIsValueSpatialOperator(func='ST_DISTANCE', op='>'),
+        'distance_gte': HanaIsValueSpatialOperator(func='ST_DISTANCE', op='>='),
+        'distance_lt': HanaIsValueSpatialOperator(func='ST_DISTANCE', op='<'),
+        'distance_lte': HanaIsValueSpatialOperator(func='ST_DISTANCE', op='<='),
+        'equals': HanaIsOneSpatialOperator(func='ST_EQUALS'),
+        'exact': HanaIsOneSpatialOperator(func='ST_EQUALS'),
+        'intersects': HanaIsOneSpatialOperator(func='ST_INTERSECTS'),
+        'overlaps': HanaIsOneSpatialOperator(func='ST_OVERLAPS'),
+        'same_as': HanaIsOneSpatialOperator(func='ST_EQUALS'),
+        'relate': HanaIsOneSpatialOperator(func='ST_RELATE'),
+        'touches': HanaIsOneSpatialOperator(func='ST_TOUCHES'),
+        'within': HanaIsValueSpatialOperator(func='ST_WITHINDISTANCE', op='<='),
+    }
 
     def __init__(self, connection):
         super(DatabaseOperations, self).__init__(connection)
@@ -159,7 +202,87 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
     def modify_update_params(self, params):
         return map(self.sanitize_bool, params)
 
+    def modify_params(self, params):
+        return map(self.sanitize_geometry, params)
+
     def sanitize_bool(self, param):
         if type(param) is bool:
             return 1 if param else 0
         return param
+
+    def sanitize_geometry(self, param):
+        if type(param) is WKTAdapter:
+            return str(param)
+        return param
+
+    def get_db_converters(self, expression):
+        converters = super(DatabaseOperations, self).get_db_converters(expression)
+        internal_type = expression.output_field.get_internal_type()
+        geometry_fields = (
+            'PointField', 'LineStringField', 'PolygonField',
+            'MultiPointField', 'MultiLineStringField', 'MultiPolygonField',
+        )
+        if internal_type in geometry_fields:
+            converters.append(self.convert_geometry_value)
+        if hasattr(expression.output_field, 'geom_type'):
+            converters.append(self.convert_geometry)
+        return converters
+
+    def convert_geometry_value(self, value, expression, connection, context):
+        if value is not None:
+            value = ''.join('{:02x}'.format(x) for x in value)
+        return value
+
+    def convert_geometry(self, value, expression, connection, context):
+        if value:
+            value = Geometry(value)
+            if 'transformed_srid' in context:
+                value.srid = context['transformed_srid']
+        return value
+
+    def _geo_db_type(self, f):
+        return "ST_%s" % f.geom_type
+
+    def geo_db_type(self, f):
+        internal_type = self._geo_db_type(f)
+        return internal_type if f.geom_type == 'POINT' else 'ST_GEOMETRY'
+
+    def get_distance(self, f, value, lookup_type):
+        if not value:
+            return []
+        value = value[0]
+        if isinstance(value, Distance):
+            if f.geodetic(self.connection):
+                raise ValueError('SAP HANA does not support distance queries on '
+                                 'geometry fields with a geodetic coordinate system. '
+                                 'Distance objects; use a numeric value of your '
+                                 'distance in degrees instead.')
+            else:
+                dist_param = getattr(value, Distance.unit_attname(f.units_name(self.connection)))
+        else:
+            dist_param = value
+        return [dist_param]
+
+    def get_geom_placeholder(self, f, value, compiler):
+        if value is None:
+            placeholder = '%s'
+        else:
+            db_type = self._geo_db_type(f)
+            placeholder = 'NEW %s(%%s, %s)' % (db_type, f.srid)
+
+        if hasattr(value, 'as_sql'):
+            sql, _ = compiler.compile(value)
+            placeholder = placeholder % sql
+
+        return placeholder
+
+    def geometry_columns(self):
+        from django_hana.models import HanaGeometryColumns
+        return HanaGeometryColumns
+
+    def spatial_ref_sys(self):
+        from django_hana.models import HanaSpatialRefSys
+        return HanaSpatialRefSys
+
+    def modify_insert_params(self, placeholders, params):
+        return map(lambda param: map(lambda p: str(p), param), params)

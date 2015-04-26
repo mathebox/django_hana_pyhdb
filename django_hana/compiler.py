@@ -25,6 +25,11 @@ class SQLCompiler(compiler.SQLCompiler):
             values.append(self.query.convert_values(value, field, connection=self.connection))
         return row[:index_extra_select] + tuple(values)
 
+    def as_sql(self):
+        result, params = super(SQLCompiler, self).as_sql()
+        update_params = self.connection.ops.modify_params(params)
+        return result, update_params
+
 class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
     def as_sql(self):
         qn = self.connection.ops.quote_name
@@ -75,6 +80,7 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
             seq_func=self.connection.ops.get_seq_name(opts.db_table,auto_field_column)+'.nextval, '
 
         params = self.connection.ops.modify_insert_params(placeholders, params)
+        params = self.connection.ops.modify_params(params)
 
         return [
             (" ".join(result + ["VALUES ("+seq_func+"%s)" % ", ".join(p)]), vals)

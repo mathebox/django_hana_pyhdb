@@ -9,19 +9,23 @@ from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.features import BaseDatabaseFeatures
 from django.db.backends.base.validation import BaseDatabaseValidation
 from django.db.backends.signals import connection_created
+
+from django.contrib.gis.db.backends.base.features import BaseSpatialFeatures
+
 from django_hana.operations import DatabaseOperations
 from django_hana.client import DatabaseClient
 from django_hana.creation import DatabaseCreation
 from django_hana.introspection import DatabaseIntrospection
 from django_hana.schema import DatabaseSchemaEditor
 from django.utils.timezone import utc
+
 from time import time
 
 import pyhdb
 
 logger = logging.getLogger('django.db.backends')
 
-class DatabaseFeatures(BaseDatabaseFeatures):
+class DatabaseFeatures(BaseDatabaseFeatures, BaseSpatialFeatures):
     needs_datetime_string_cast = True
     can_return_id_from_insert = False
     requires_rollback_on_dirty_transaction = True
