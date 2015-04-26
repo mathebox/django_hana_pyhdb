@@ -42,9 +42,28 @@ class RowStoreModel(models.Model):
 	some_field = models.CharField()
 ```
 
+### Support of spatial column types
+Add `django.contrib.gis` to your `INSTALLED_APPS`.
+
+In your `models.py` files use 
+```
+from django.contrib.gis.db.models import ...
+```
+instead of
+```
+from django.db.models import ...
+```
+Make use of the following fields:
+- PointField
+- LineStringField
+- PolygonField
+- MultiPointField
+- MulitLineString
+- MultiPolygon
+
 ## Test system
-- Django 1.7.5
-- HDB version 1.00.70.387267
+- Django 1.8
+- HDB version 1.00.094.00.1427101515
 
 ## Disclaimer
 This project is not a part of standard SAP HANA delivery, hence SAP support is not responsible for any queries related to
