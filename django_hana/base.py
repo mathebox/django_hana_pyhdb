@@ -21,7 +21,11 @@ from django.utils.timezone import utc
 
 from time import time
 
-import pyhdb
+try:
+    import pyhdb as Database
+except ImportError as e:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("Error loading PyHDB module: %s" % e)
 
 logger = logging.getLogger('django.db.backends')
 
@@ -192,6 +196,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'iendswith': 'LIKE UPPER(%s)',
     }
 
+    Database = Database
+
     def __init__(self, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
 
@@ -238,7 +244,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             conn_params['host'] = self.settings_dict['HOST']
         if self.settings_dict['PORT']:
             conn_params['port'] = self.settings_dict['PORT']
-        self.connection = pyhdb.connect(
+        self.connection = Database.connect(
             host=conn_params['host'],
             port=int(conn_params['port']),
             user=conn_params['user'],
