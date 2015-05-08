@@ -11,6 +11,6 @@ setup(
     url='https://github.com/mathebox/django_hana',
     packages=['django_hana'],
     install_requires = [
-        'pyhdb==0.2.2'
+        'pyhdb==0.2.3'
     ],
 )
