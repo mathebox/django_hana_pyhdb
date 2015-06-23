@@ -45,6 +45,7 @@ class DatabaseFeatures(BaseDatabaseFeatures, BaseSpatialFeatures):
     uses_savepoints = False
     can_introspect_foreign_keys = False
     supports_timezones = False
+    requires_literal_defaults = True
 
 
 class CursorWrapper(object):

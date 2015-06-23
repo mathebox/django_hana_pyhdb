@@ -19,7 +19,7 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
     sql_alter_column_null = "ALTER (%(column)s %(type)s)" # changed
     sql_alter_column_not_null = "ALTER (%(column)s %(type)s NOT NULL)" # changed
     sql_alter_column_default = "ALTER (%(column)s %(definition)s DEFAULT %(default)s)" # changed
-    sql_alter_column_no_default = "ALTER (%(column)s %(definition)s DEFAULT NULL)" # changed
+    sql_alter_column_no_default = "ALTER (%(column)s %(definition)s)" # changed
     sql_delete_column = "ALTER TABLE %(table)s DROP (%(column)s)" # changed
     sql_rename_column = "ALTER TABLE %(table)s RENAME COLUMN %(old_column)s TO %(new_column)s"
     sql_update_with_default = "UPDATE %(table)s SET %(column)s = %(default)s WHERE %(column)s IS NULL"
@@ -43,6 +43,11 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
     def skip_default(self, field):
         # foreign key columns should not have a default value
         return field.column.endswith("_id")
+
+    def prepare_default(self, value):
+        if isinstance(value, basestring):
+            return "'%s'" % (value,)
+        return str(value)
 
     def create_model(self, model):
         """
