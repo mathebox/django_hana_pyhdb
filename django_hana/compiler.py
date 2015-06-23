@@ -51,27 +51,24 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
             result.append('(%s)' % ', '.join([qn(f.column) for f in fields]))
 
         if has_fields:
-            params=[]
-            for obj in self.query.objs:
-                vals=[]
-                for f in fields:
-                    val=f.get_db_prep_save(getattr(obj, f.attname) if self.query.raw else f.pre_save(obj, True), connection=self.connection)
-                    vals.append(val)
-                params.append(vals)
-
-            values=params
+            params = values = [
+                [
+                    f.get_db_prep_save(
+                        getattr(obj, f.attname) if self.query.raw else f.pre_save(obj, True),
+                        connection=self.connection
+                    ) for f in fields
+                ]
+                for obj in self.query.objs
+            ]
         else:
             values = [[self.connection.ops.pk_default_value()] for obj in self.query.objs]
             params = [[]]
             fields = [None]
 
-        placeholders=[]
-        for val in values:
-            p=[]
-            for field,v in izip(fields,val):
-                p.append(self.placeholder(field,v))
-            placeholders.append(p)
-
+        placeholders = [
+            [self.placeholder(field, v) for field, v in zip(fields, val)]
+            for val in values
+        ]
 
         seq_func=''
         # don't insert call to seq function if explicit pk field value is provided
@@ -82,10 +79,35 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
         params = self.connection.ops.modify_insert_params(placeholders, params)
         params = self.connection.ops.modify_params(params)
 
+        can_bulk = (not any(hasattr(field, "get_placeholder") for field in fields) and
+            self.connection.features.has_bulk_insert)
+
+        if can_bulk and len(params) > 1:
+            placeholders = ["%s"] * len(fields)
+            return [
+                (" ".join(result + ["VALUES ("+seq_func+"%s)" % ", ".join(placeholders)]), params)
+            ]
+
         return [
             (" ".join(result + ["VALUES ("+seq_func+"%s)" % ", ".join(p)]), vals)
             for p, vals in izip(placeholders, params)
         ]
+
+    def execute_sql(self, return_id=False):
+        assert not (return_id and len(self.query.objs) != 1)
+        self.return_id = return_id
+        with self.connection.cursor() as cursor:
+            for sql, params in self.as_sql():
+                if isinstance(params, list) and isinstance(params[0], list):
+                    cursor.executemany(sql, params)
+                else:
+                    cursor.execute(sql, params)
+            if not (return_id and cursor):
+                return
+            if self.connection.features.can_return_id_from_insert:
+                return self.connection.ops.fetch_returned_insert_id(cursor)
+            return self.connection.ops.last_insert_id(cursor,
+                    self.query.get_meta().db_table, self.query.get_meta().pk.column)
 
 
 class SQLDeleteCompiler(compiler.SQLDeleteCompiler,SQLCompiler):

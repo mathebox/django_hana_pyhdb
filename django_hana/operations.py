@@ -283,6 +283,3 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
     def spatial_ref_sys(self):
         from django_hana.models import HanaSpatialRefSys
         return HanaSpatialRefSys
-
-    def modify_insert_params(self, placeholders, params):
-        return map(lambda param: map(lambda p: str(p), param), params)

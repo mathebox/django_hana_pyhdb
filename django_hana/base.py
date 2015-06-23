@@ -86,31 +86,34 @@ class CursorWrapper(object):
         """
             execute with replaced placeholders
         """
-        self.cursor.execute(sql, params)
-        # try:
-        #     self.cursor.execute(self._replace_params(sql,len(params) if params else 0),params)
-        # except Database.IntegrityError as e:
-        #     six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
-        # except Database.Error as e:
-        #     # Map some error codes to IntegrityError, since they seem to be
-        #     # misclassified and Django would prefer the more logical place.
-        #     if e[0] in self.codes_for_integrityerror:
-        #         six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
-        #     six.reraise(utils.DatabaseError, utils.DatabaseError(*tuple(e.args)), sys.exc_info()[2])
+        try:
+            self.cursor.execute(self._replace_params(sql), params)
+        except Database.IntegrityError as e:
+            six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
+        except Database.Error as e:
+            # Map some error codes to IntegrityError, since they seem to be
+            # misclassified and Django would prefer the more logical place.
+            if e[0] in self.codes_for_integrityerror:
+                six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
+            six.reraise(utils.DatabaseError, utils.DatabaseError(*tuple(e.args)), sys.exc_info()[2])
 
     def executemany(self, sql, param_list):
-        self.cursor.executemany(sql, param_list)
-        # try:
-        #     self.cursor.executemany(self._replace_params(sql,len(param_list[0]) if param_list and len(param_list)>0 else 0),param_list)
-        # except Database.IntegrityError as e:
-        #     six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
-        # except Database.Error as e:
-        #     # Map some error codes to IntegrityError, since they seem to be
-        #     # misclassified and Django would prefer the more logical place.
-        #     if e[0] in self.codes_for_integrityerror:
-        #         six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
-        #     six.reraise(utils.DatabaseError, utils.DatabaseError(*tuple(e.args)), sys.exc_info()[2])
+        try:
+            self.cursor.executemany(self._replace_params(sql), param_list)
+        except Database.IntegrityError as e:
+            six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
+        except Database.Error as e:
+            # Map some error codes to IntegrityError, since they seem to be
+            # misclassified and Django would prefer the more logical place.
+            if e[0] in self.codes_for_integrityerror:
+                six.reraise(utils.IntegrityError, utils.IntegrityError(*tuple(e.args)), sys.exc_info()[2])
+            six.reraise(utils.DatabaseError, utils.DatabaseError(*tuple(e.args)), sys.exc_info()[2])
 
+    def _replace_params(self, sql):
+        """
+        converts %s style placeholders to ?
+        """
+        return sql.replace("%s", "?")
 
 class CursorDebugWrapper(CursorWrapper):
 
