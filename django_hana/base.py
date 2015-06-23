@@ -37,7 +37,7 @@ class DatabaseFeatures(BaseDatabaseFeatures, BaseSpatialFeatures):
     can_defer_constraint_checks = True
     has_select_for_update = True
     has_select_for_update_nowait = True
-    has_bulk_insert = False
+    has_bulk_insert = True
     supports_tablespaces = False
     supports_transactions = True
     can_distinct_on_fields = False

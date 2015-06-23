@@ -86,6 +86,9 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
     def quote_name(self, name):
         return '"%s"' % name.replace('"', '""').upper()
 
+    def bulk_batch_size(self, fields, objs):
+        return 2500
+
     def sql_flush(self, style, tables, sequences):
         if tables:
             sql = ['%s %s %s;' % (style.SQL_KEYWORD('TRUNCATE'),style.SQL_KEYWORD('TABLE'),style.SQL_FIELD(self.quote_name(table))) for table in tables]
