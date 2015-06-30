@@ -29,7 +29,8 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         cursor.execute("select table_name, 't' from tables where schema_name='%s' \
                         UNION select view_name, 'v' from views where schema_name='%s'"
                         % (self.connection.default_schema, self.connection.default_schema,))
-        result = [TableInfo(row[0].lower(), row[1]) for row in cursor.fetchall()]
+        result = [TableInfo(row[0], row[1]) for row in cursor.fetchall()]
+        result = result + [TableInfo(t.name.lower(), t.type) for t in result]
         return result
 
     def table_name_converter(self, name):

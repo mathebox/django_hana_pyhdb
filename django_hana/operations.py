@@ -89,9 +89,9 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
     def bulk_batch_size(self, fields, objs):
         return 2500
 
-    def sql_flush(self, style, tables, sequences):
+    def sql_flush(self, style, tables, sequences, allow_cascades=False):
         if tables:
-            sql = ['%s %s %s;' % (style.SQL_KEYWORD('TRUNCATE'),style.SQL_KEYWORD('TABLE'),style.SQL_FIELD(self.quote_name(table))) for table in tables]
+            sql = ['%s %s %s' % (style.SQL_KEYWORD('DELETE'),style.SQL_KEYWORD('FROM'),style.SQL_FIELD(self.quote_name(table))) for table in tables]
             sql.extend(self.sequence_reset_by_name_sql(style, sequences))
             return sql
         else:
@@ -103,7 +103,7 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
             table_name = sequence_info['table']
             column_name = sequence_info['column']
             seq_name=self.get_seq_name(table_name,column_name)
-            sql.append("ALTER SEQUENCE "+seq_name+" RESET BY SELECT IFNULL(MAX("+column_name+"),0) + 1 from "+table_name + ';')
+            sql.append("ALTER SEQUENCE "+seq_name+" RESET BY SELECT IFNULL(MAX("+column_name+"),0) + 1 from "+table_name)
         return sql
 
     def sequence_reset_sql(self, style, model_list):
