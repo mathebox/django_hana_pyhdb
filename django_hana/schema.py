@@ -16,7 +16,7 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
     sql_create_column = "ALTER TABLE %(table)s ADD (%(column)s %(definition)s)" # changed
     sql_alter_column = "ALTER TABLE %(table)s %(changes)s"
     sql_alter_column_type = "ALTER (%(column)s %(type)s)" # changed
-    sql_alter_column_null = "ALTER (%(column)s %(type)s)" # changed
+    sql_alter_column_null = "ALTER (%(column)s %(type)s NULL)" # changed
     sql_alter_column_not_null = "ALTER (%(column)s %(type)s NOT NULL)" # changed
     sql_alter_column_default = "ALTER (%(column)s %(definition)s DEFAULT %(default)s)" # changed
     sql_alter_column_no_default = "ALTER (%(column)s %(definition)s)" # changed
