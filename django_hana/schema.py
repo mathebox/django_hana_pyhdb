@@ -21,7 +21,7 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
     sql_alter_column_default = "ALTER (%(column)s %(definition)s DEFAULT %(default)s)" # changed
     sql_alter_column_no_default = "ALTER (%(column)s %(definition)s)" # changed
     sql_delete_column = "ALTER TABLE %(table)s DROP (%(column)s)" # changed
-    sql_rename_column = "ALTER TABLE %(table)s RENAME COLUMN %(old_column)s TO %(new_column)s"
+    sql_rename_column = "RENAME COLUMN %(table)s.%(old_column)s TO %(new_column)s" # changed
     sql_update_with_default = "UPDATE %(table)s SET %(column)s = %(default)s WHERE %(column)s IS NULL"
 
     sql_create_check = "ALTER TABLE %(table)s ADD CONSTRAINT %(name)s CHECK (%(check)s)"
@@ -258,7 +258,12 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
                 self.execute(self._delete_constraint_sql(self.sql_delete_check, model, constraint_name))
         # Have they renamed the column?
         if old_field.column != new_field.column:
-            self.execute(self._rename_field_sql(model._meta.db_table, old_field, new_field, new_type))
+            self.execute(self.sql_rename_column % {
+                "table": self.quote_name(model._meta.db_table),
+                "old_column": self.quote_name(old_field.column),
+                "new_column": self.quote_name(new_field.column),
+                "type": new_type,
+            })
         # Next, start accumulating actions to do
         actions = []
         null_actions = []
