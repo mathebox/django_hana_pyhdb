@@ -13,4 +13,7 @@ setup(
     install_requires = [
         'pyhdb==0.3.0'
     ],
+    dependency_links = [
+        'https://github.com/mathebox/PyHDB/archive/20d12e014b1b87a23292ae9f7ca14e2b905c2e8c.zip#egg=pyhdb-0.3.0'
+    ],
 )
