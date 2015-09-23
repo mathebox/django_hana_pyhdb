@@ -9,6 +9,11 @@
     ```bash
 	python setup.py install
 	```
+   **When you use this package in a requirements file, you have to use** 
+   ```bash
+   pip install --process-dependency-links -r ./requirements.txt
+   ```
+   **in order to install all dependencies.**
 
 2. The config in the Django project is as follows
 
