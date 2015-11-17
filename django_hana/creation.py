@@ -114,7 +114,7 @@ class DatabaseCreation(BaseDatabaseCreation):
                 output.append(ds)
         return output
 
-    def _create_test_db(self, verbosity, autoclobber):
+    def _create_test_db(self, verbosity, autoclobber, keepdb=False):
         """
         Internal implementation - creates the test db tables.
         Modified because SAP HANA has schema to group related tables
@@ -126,11 +126,15 @@ class DatabaseCreation(BaseDatabaseCreation):
         qn = self.connection.ops.quote_name
 
         cursor = self.connection.cursor()
-        self._prepare_for_test_db_ddl()
         try:
             cursor.execute(
                 "CREATE SCHEMA %s %s" % (qn(test_database_name), suffix))
         except Exception as e:
+            # if we want to keep the db, then no need to do any of the below,
+            # just return and skip it all.
+            if keepdb:
+                return test_database_name
+
             sys.stderr.write(
                 "Got an error creating the test database: %s\n" % e)
             if not autoclobber:
@@ -166,7 +170,6 @@ class DatabaseCreation(BaseDatabaseCreation):
         # to do so, because it's not allowed to delete a database while being
         # connected to it.
         cursor = self.connection.cursor()
-        self._prepare_for_test_db_ddl()
         # Wait to avoid "database is being accessed by other users" errors.
         time.sleep(1)
         cursor.execute("DROP SCHEMA %s CASCADE"
