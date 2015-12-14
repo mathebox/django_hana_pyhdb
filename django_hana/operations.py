@@ -53,7 +53,7 @@ class DatabaseOperations(BaseDatabaseOperations, BaseSpatialOperations):
         super(DatabaseOperations, self).__init__(connection)
 
     def get_seq_name(self,table,column):
-        return self.connection.default_schema+"_"+table+"_"+column+"_seq"
+        return '%s_%s_seq' % (table, column)
 
     def autoinc_sql(self, table, column):
         seq_name=self.quote_name(self.get_seq_name(table,column))
