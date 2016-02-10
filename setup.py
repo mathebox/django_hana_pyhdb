@@ -14,6 +14,6 @@ setup(
         'pyhdb==0.3.1-mod'
     ],
     dependency_links = [
-        'https://github.com/mathebox/PyHDB/archive/f3cb802a9da783238c937c0175a36c771f77a9d3.zip#egg=pyhdb-0.3.1-mod'
+        'https://github.com/mathebox/PyHDB/archive/c1fc457e1cdd6b6085b0b9ce68baf1a92427d0ad.zip#egg=pyhdb-0.3.1-mod'
     ],
 )
