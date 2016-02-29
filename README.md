@@ -4,18 +4,15 @@
 - original work done by [@kapilratnani](https://github.com/kapilratnani) (https://github.com/kapilratnani/django_hana)
 
 ## Setup
-1. install the python package via setup.py
+1. Install [PyHDB](https://github.com/SAP/PyHDB) 
+
+1. Install the python package via setup.py
 
     ```bash
 	python setup.py install
 	```
-   **When you use this package in a requirements file, you have to use** 
-   ```bash
-   pip install --process-dependency-links -r ./requirements.txt
-   ```
-   **in order to install all dependencies.**
 
-2. The config in the Django project is as follows
+1. The config in the Django project is as follows
 
 	```python		
 	DATABASES = {
@@ -29,7 +26,7 @@
         }
     }
     ```
-3. HANA doesn't support Timezone. Set USE_TZ=False in settings.py.
+1. HANA doesn't support Timezone. Set USE_TZ=False in settings.py.
 
 ## Config
 ### Column/Row store
