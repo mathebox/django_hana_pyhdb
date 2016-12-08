@@ -196,10 +196,15 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
             value = bool(value)
         return value
 
-    def modify_insert_params(self, placeholders, params):
+    def modify_insert_params(self, placeholder, params):
         insert_param_groups = []
         for p in params:
-            insert_param_groups.append(map(self.sanitize_bool, p))
+            if isinstance(p, list):
+                insert_param_groups.append(map(self.sanitize_bool, p))
+            else:
+                # As of Django 1.9, modify_insert_params is also called in SQLInsertCompiler.field_as_sql.
+                # When it's called from there, params is not a list inside a list, but only a list.
+                insert_param_groups.append(self.sanitize_bool(p))
         return insert_param_groups
 
     def modify_update_params(self, params):

@@ -333,4 +333,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             #     raise
 
     def schema_editor(self, *args, **kwargs):
-        return DatabaseSchemaEditor(self, kwargs)
+        return DatabaseSchemaEditor(self, **kwargs)
+
+    def is_usable(self):
+        return not self.connection.closed

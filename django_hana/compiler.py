@@ -1,5 +1,6 @@
 from itertools import izip
 
+from django_hana import compat
 from django.core.exceptions import FieldError
 from django.db import transaction
 from django.db.backends.utils import truncate_name
@@ -66,7 +67,7 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
             fields = [None]
 
         placeholders = [
-            [self.placeholder(field, v) for field, v in zip(fields, val)]
+            [compat.createPlaceholder(self, field, v) for field, v in zip(fields, val)]
             for val in values
         ]
 
