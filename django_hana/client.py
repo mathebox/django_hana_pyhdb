@@ -3,6 +3,7 @@ import sys
 
 from django.db.backends.base.client import BaseDatabaseClient
 
+
 class DatabaseClient(BaseDatabaseClient):
     executable_name = 'hdbsql'
 
@@ -20,4 +21,3 @@ class DatabaseClient(BaseDatabaseClient):
             sys.exit(os.system(" ".join(args)))
         else:
             os.execvp(self.executable_name, args)
-

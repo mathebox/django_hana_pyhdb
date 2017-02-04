@@ -1,14 +1,15 @@
-from django_hana import compat
 from django.core.exceptions import FieldError
-from django.db import transaction
+from django.db import models, transaction
 from django.db.backends.utils import truncate_name
 from django.db.models.query_utils import select_related_descend
+from django.db.models.sql import compiler
 from django.db.models.sql.constants import *
 from django.db.models.sql.datastructures import EmptyResultSet
-from django.db.models.sql.query import get_order_dir, Query
+from django.db.models.sql.query import Query, get_order_dir
 from django.db.utils import DatabaseError
-from django.db import models
-from django.db.models.sql import compiler
+
+from django_hana import compat
+
 
 class SQLCompiler(compiler.SQLCompiler):
     def resolve_columns(self, row, fields=()):

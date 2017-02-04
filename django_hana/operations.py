@@ -1,13 +1,13 @@
 from __future__ import unicode_literals
 
-from django.db.backends.base.operations import BaseDatabaseOperations
-from django.contrib.gis.geometry.backend import Geometry
 from django.contrib.gis.db.backends.base.adapter import WKTAdapter
 from django.contrib.gis.db.backends.base.operations import \
     BaseSpatialOperations
 from django.contrib.gis.db.backends.utils import SpatialOperator
+from django.contrib.gis.geometry.backend import Geometry
 from django.contrib.gis.measure import Distance
 from django.core.management.color import color_style
+from django.db.backends.base.operations import BaseDatabaseOperations
 from django.utils import six
 from django.utils.encoding import force_bytes, force_text
 

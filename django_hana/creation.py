@@ -6,6 +6,7 @@ from django.db.backends.utils import truncate_name
 
 import django_hana
 
+
 class DatabaseCreation(BaseDatabaseCreation):
 
     def sql_create_model(self, model, style, known_models=set()):
@@ -203,5 +204,3 @@ class DatabaseCreation(BaseDatabaseCreation):
         else:
             output = []
         return output
-
-

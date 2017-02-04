@@ -79,4 +79,3 @@ class HanaSpatialRefSys(models.Model, SpatialRefSysMixin):
     @classmethod
     def wkt_col(cls):
         return 'definition'
-
