@@ -10,4 +10,5 @@ setup(
     author_email='mathebox@gmail.com, kapil.ratnani@iiitb.net',
     url='https://github.com/mathebox/django_hana',
     packages=['django_hana'],
+    test_suite="runtests.runtests",
 )

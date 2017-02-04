@@ -1,10 +1,13 @@
 # Django DB Backend for SAP HANA
+
+[![Build Status](https://travis-ci.org/mathebox/django_hana_pyhdb.svg?branch=master)](https://travis-ci.org/mathebox/django_hana_pyhdb)
+
 - for Linux, Mac OS and Windows
 - build on top of [PyHDB](https://github.com/SAP/PyHDB)
 - original work done by [@kapilratnani](https://github.com/kapilratnani) (https://github.com/kapilratnani/django_hana)
 
 ## Setup
-1. Install [PyHDB](https://github.com/SAP/PyHDB) 
+1. Install [PyHDB](https://github.com/SAP/PyHDB)
 
 1. Install the python package via setup.py
 
@@ -14,15 +17,15 @@
 
 1. The config in the Django project is as follows
 
-	```python		
+	```python
 	DATABASES = {
         'default': {
             'ENGINE': 'django_hana',           # or as per your python path
             'NAME': '<SCHEMA_NAME>',           # The schema to use. It will be created if doesn't exist
             'USER': '<USERNAME>',
             'PASSWORD': '<PASSWORD>',
-            'HOST': '<HOSTNAME>',                      
-            'PORT': '3<INSTANCE_NUMBER>15',               
+            'HOST': '<HOSTNAME>',
+            'PORT': '3<INSTANCE_NUMBER>15',
         }
     }
     ```
@@ -38,7 +41,7 @@ from django_hana import column_store, row_store
 @column_store
 class ColumnStoreModel(models.Model):
 	some_field = models.CharField()
-	
+
 @row_store
 class RowStoreModel(models.Model):
 	some_field = models.CharField()
@@ -47,7 +50,7 @@ class RowStoreModel(models.Model):
 ### Support of spatial column types
 Add `django.contrib.gis` to your `INSTALLED_APPS`.
 
-In your `models.py` files use 
+In your `models.py` files use
 ```
 from django.contrib.gis.db.models import ...
 ```
