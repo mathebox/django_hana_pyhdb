@@ -208,10 +208,10 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
         return insert_param_groups
 
     def modify_update_params(self, params):
-        return map(self.sanitize_bool, params)
+        return tuple(self.sanitize_bool(param) for param in params)
 
     def modify_params(self, params):
-        return map(self.sanitize_geometry, params)
+        return tuple(self.sanitize_geometry(param) for param in params)
 
     def sanitize_bool(self, param):
         if type(param) is bool:

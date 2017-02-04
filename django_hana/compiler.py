@@ -1,5 +1,3 @@
-from itertools import izip
-
 from django_hana import compat
 from django.core.exceptions import FieldError
 from django.db import transaction
@@ -91,7 +89,7 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
 
         return [
             (" ".join(result + ["VALUES ("+seq_func+"%s)" % ", ".join(p)]), vals)
-            for p, vals in izip(placeholders, params)
+            for p, vals in zip(placeholders, params)
         ]
 
     def execute_sql(self, return_id=False):

@@ -25,7 +25,7 @@ class TestCreation(DatabaseSQLMixin, unittest.TestCase):
             'RESET BY SELECT IFNULL(MAX("ID"),0) + 1 FROM "TEST_DHP_TESTMODEL"',
         )
 
-        create_statements = connection.creation.sql_create_model(TestModel, self.style, [])[0]
+        create_statements, _ = connection.creation.sql_create_model(TestModel, self.style, [])
         self.assertEqual(len(create_statements), len(expected_statements))
         for statement, expected in zip(create_statements, expected_statements):
             self.assertQueryEqual(statement, expected)
