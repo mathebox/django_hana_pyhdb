@@ -1,12 +1,4 @@
-from django.core.exceptions import FieldError
-from django.db import models, transaction
-from django.db.backends.utils import truncate_name
-from django.db.models.query_utils import select_related_descend
 from django.db.models.sql import compiler
-from django.db.models.sql.constants import *
-from django.db.models.sql.datastructures import EmptyResultSet
-from django.db.models.sql.query import Query, get_order_dir
-from django.db.utils import DatabaseError
 
 from django_hana import compat
 
@@ -30,6 +22,7 @@ class SQLCompiler(compiler.SQLCompiler):
         update_params = self.connection.ops.modify_params(params)
         return result, update_params
 
+
 class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
     def as_sql(self):
         qn = self.connection.ops.quote_name
@@ -39,13 +32,13 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
         has_fields = bool(self.query.fields)
         fields = self.query.fields if has_fields else [opts.pk]
 
-        pkinfields=False #when explicit pk value is provided
+        pkinfields = False  # when explicit pk value is provided
         if opts.pk in fields:
-            pkinfields=True;
+            pkinfields = True
 
         if opts.has_auto_field and not pkinfields:
             # get auto field name
-            auto_field_column=opts.auto_field.db_column or opts.auto_field.column
+            auto_field_column = opts.auto_field.db_column or opts.auto_field.column
             result.append('('+auto_field_column+',%s)' % ', '.join([qn(f.column) for f in fields]))
         else:
             result.append('(%s)' % ', '.join([qn(f.column) for f in fields]))
@@ -70,26 +63,28 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
             for val in values
         ]
 
-        seq_func=''
+        seq_func = ''
         # don't insert call to seq function if explicit pk field value is provided
         if opts.has_auto_field and not pkinfields:
-            auto_field_column=opts.auto_field.db_column or opts.auto_field.column
-            seq_func=self.connection.ops.get_seq_name(opts.db_table,auto_field_column)+'.nextval, '
+            auto_field_column = opts.auto_field.db_column or opts.auto_field.column
+            seq_func = self.connection.ops.get_seq_name(opts.db_table, auto_field_column) + '.nextval, '
 
         params = self.connection.ops.modify_insert_params(placeholders, params)
         params = self.connection.ops.modify_params(params)
 
-        can_bulk = (not any(hasattr(field, "get_placeholder") for field in fields) and
-            self.connection.features.has_bulk_insert)
+        can_bulk = (
+            not any(hasattr(field, 'get_placeholder') for field in fields)
+            and self.connection.features.has_bulk_insert
+        )
 
         if can_bulk and len(params) > 1:
-            placeholders = ["%s"] * len(fields)
+            placeholders = ['%s'] * len(fields)
             return [
-                (" ".join(result + ["VALUES ("+seq_func+"%s)" % ", ".join(placeholders)]), params)
+                (' '.join(result + ['VALUES (' + seq_func + '%s)' % ', '.join(placeholders)]), params)
             ]
 
         return [
-            (" ".join(result + ["VALUES ("+seq_func+"%s)" % ", ".join(p)]), vals)
+            (' '.join(result + ['VALUES (' + seq_func + '%s)' % ', '.join(p)]), vals)
             for p, vals in zip(placeholders, params)
         ]
 
@@ -106,18 +101,23 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
                 return
             if self.connection.features.can_return_id_from_insert:
                 return self.connection.ops.fetch_returned_insert_id(cursor)
-            return self.connection.ops.last_insert_id(cursor,
-                    self.query.get_meta().db_table, self.query.get_meta().pk.column)
+            return self.connection.ops.last_insert_id(
+                cursor,
+                self.query.get_meta().db_table,
+                self.query.get_meta().pk.column,
+            )
 
 
-class SQLDeleteCompiler(compiler.SQLDeleteCompiler,SQLCompiler):
+class SQLDeleteCompiler(compiler.SQLDeleteCompiler, SQLCompiler):
     pass
 
-class SQLUpdateCompiler(compiler.SQLUpdateCompiler,SQLCompiler):
+
+class SQLUpdateCompiler(compiler.SQLUpdateCompiler, SQLCompiler):
     def as_sql(self):
         result, params = super(SQLUpdateCompiler, self).as_sql()
         update_params = self.connection.ops.modify_update_params(params)
         return result, update_params
+
 
 class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
     pass

@@ -1,29 +1,27 @@
 from __future__ import unicode_literals
 
 from django.contrib.gis.db.backends.base.adapter import WKTAdapter
-from django.contrib.gis.db.backends.base.operations import \
-    BaseSpatialOperations
+from django.contrib.gis.db.backends.base.operations import BaseSpatialOperations
 from django.contrib.gis.db.backends.utils import SpatialOperator
 from django.contrib.gis.geometry.backend import Geometry
 from django.contrib.gis.measure import Distance
-from django.core.management.color import color_style
 from django.db.backends.base.operations import BaseDatabaseOperations
-from django.utils import six
-from django.utils.encoding import force_bytes, force_text
 
 
 class HanaSpatialOperator(SpatialOperator):
-    sql_template = "%(lhs)s.%(func)s(%(rhs)s)"
+    sql_template = '%(lhs)s.%(func)s(%(rhs)s)'
+
 
 class HanaIsOneSpatialOperator(SpatialOperator):
-    sql_template = "%(lhs)s.%(func)s(%(rhs)s) = 1"
+    sql_template = '%(lhs)s.%(func)s(%(rhs)s) = 1'
+
 
 class HanaIsValueSpatialOperator(SpatialOperator):
-    sql_template = "%(lhs)s.%(func)s(%(rhs)s) %(op)s %%s"
+    sql_template = '%(lhs)s.%(func)s(%(rhs)s) %(op)s %%s'
 
 
 class DatabaseOperations(BaseDatabaseOperations, BaseSpatialOperations):
-    compiler_module = "django_hana.compiler"
+    compiler_module = 'django_hana.compiler'
 
     Adapter = WKTAdapter
     Adaptor = Adapter  # Backwards-compatibility alias.
@@ -52,32 +50,34 @@ class DatabaseOperations(BaseDatabaseOperations, BaseSpatialOperations):
     def __init__(self, connection):
         super(DatabaseOperations, self).__init__(connection)
 
-    def get_seq_name(self,table,column):
+    def get_seq_name(self, table, column):
         return '%s_%s_seq' % (table, column)
 
     def autoinc_sql(self, table, column):
-        seq_name=self.quote_name(self.get_seq_name(table,column))
-        column=self.quote_name(column)
-        table=self.quote_name(table)
-        seq_sql="""
-CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM %(table)s
-""" % locals()
+        seq_name = self.quote_name(self.get_seq_name(table, column))
+        column = self.quote_name(column)
+        table = self.quote_name(table)
+        seq_sql = 'CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM %(table)s' % locals()
         return [seq_sql]
 
     def date_extract_sql(self, lookup_type, field_name):
         if lookup_type == 'week_day':
             # For consistency across backends, we return Sunday=1, Saturday=7.
-            return "MOD(WEEKDAY (%s) + 2,7)" % field_name
+            return 'MOD(WEEKDAY (%s) + 2,7)' % field_name
         else:
-            return "EXTRACT(%s FROM %s)" % (lookup_type, field_name)
+            return 'EXTRACT(%s FROM %s)' % (lookup_type, field_name)
 
     def date_trunc_sql(self, lookup_type, field_name):
         # very low tech, code should be optimized
-        ltypes = {'year':'YYYY','month':'YYYY-MM','day':'YYYY-MM-DD'}
+        ltypes = {
+            'year': 'YYYY',
+            'month': 'YYYY-MM',
+            'day': 'YYYY-MM-DD',
+        }
         cur_type = ltypes.get(lookup_type)
         if not cur_type:
             return field_name
-        sql = "TO_DATE(TO_VARCHAR(%s, '%s'))" % (field_name, cur_type)
+        sql = 'TO_DATE(TO_VARCHAR(%s, "%s"))' % (field_name, cur_type)
         return sql
 
     def no_limit_value(self):
@@ -91,7 +91,14 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
 
     def sql_flush(self, style, tables, sequences, allow_cascades=False):
         if tables:
-            sql = ['%s %s %s' % (style.SQL_KEYWORD('DELETE'),style.SQL_KEYWORD('FROM'),style.SQL_FIELD(self.quote_name(table))) for table in tables]
+            sql = [
+                ' '.join([
+                    style.SQL_KEYWORD('DELETE'),
+                    style.SQL_KEYWORD('FROM'),
+                    style.SQL_FIELD(self.quote_name(table)),
+                ])
+                for table in tables
+            ]
             sql.extend(self.sequence_reset_by_name_sql(style, sequences))
             return sql
         else:
@@ -102,41 +109,50 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
         for sequence_info in sequences:
             table_name = sequence_info['table']
             column_name = sequence_info['column']
-            seq_name=self.get_seq_name(table_name,column_name)
-            sql.append("ALTER SEQUENCE "+seq_name+" RESET BY SELECT IFNULL(MAX("+column_name+"),0) + 1 from "+table_name)
+            seq_name = self.get_seq_name(table_name, column_name)
+            sql.append(' '.join([
+                'ALTER SEQUENCE',
+                seq_name,
+                'RESET BY SELECT IFNULL(MAX(',
+                column_name,
+                '),0) + 1 from',
+                table_name,
+            ]))
         return sql
 
     def sequence_reset_sql(self, style, model_list):
         from django.db import models
         output = []
-        qn = self.quote_name
         for model in model_list:
             for f in model._meta.local_fields:
                 if isinstance(f, models.AutoField):
-                    output.append("%s %s %s %s %s %s" % \
-                        (style.SQL_KEYWORD("ALTER SEQUENCE"),
-                        style.SQL_TABLE(self.get_seq_name(model._meta.db_table,f.column)),
-                        style.SQL_KEYWORD("RESET BY SELECT"),
-                        style.SQL_FIELD("IFNULL(MAX("+f.column+"),0) + 1"),
-                        style.SQL_KEYWORD("FROM"),
-                        style.SQL_TABLE(model._meta.db_table)))
-                    break # Only one AutoField is allowed per model, so don't bother continuing.
+                    output.append(' '.join([
+                        style.SQL_KEYWORD('ALTER SEQUENCE'),
+                        style.SQL_TABLE(self.get_seq_name(model._meta.db_table, f.column)),
+                        style.SQL_KEYWORD('RESET BY SELECT'),
+                        style.SQL_FIELD('IFNULL(MAX('+f.column+'),0) + 1'),
+                        style.SQL_KEYWORD('FROM'),
+                        style.SQL_TABLE(model._meta.db_table),
+                    ]))
+                    break  # Only one AutoField is allowed per model, so don't bother continuing.
             for f in model._meta.many_to_many:
                 if not f.rel.through:
-                    output.append("%s %s %s %s %s %s" % \
-                        (style.SQL_KEYWORD("ALTER SEQUENCE"),
-                        style.SQL_TABLE(self.get_seq_name(f.m2m_db_table(),"id")),
-                        style.SQL_KEYWORD("RESET BY SELECT"),
-                        style.SQL_FIELD("IFNULL(MAX(id),0) + 1"),
-                        style.SQL_KEYWORD("FROM"),
-                        style.SQL_TABLE(f.m2m_db_table())))
+                    output.append(' '.join([
+                        style.SQL_KEYWORD('ALTER SEQUENCE'),
+                        style.SQL_TABLE(self.get_seq_name(f.m2m_db_table(), 'id')),
+                        style.SQL_KEYWORD('RESET BY SELECT'),
+                        style.SQL_FIELD('IFNULL(MAX(id),0) + 1'),
+                        style.SQL_KEYWORD('FROM'),
+                        style.SQL_TABLE(f.m2m_db_table())
+                    ]))
         return output
 
     def prep_for_iexact_query(self, x):
         return x
 
     def check_aggregate_support(self, aggregate):
-        """Check that the backend supports the provided aggregate
+        """
+        Check that the backend supports the provided aggregate.
 
         This is used on specific backends to rule out known aggregates
         that are known to have faulty implementations. If the named
@@ -148,13 +164,13 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
 
     def max_name_length(self):
         """
-            Returns the maximum length of table and column names, or None if there
-            is no limit."""
+        Returns the maximum length of table and column names, or None if there
+        is no limit.
+        """
         return 127
 
-
     def start_transaction_sql(self):
-        return ""
+        return ''
 
     def last_insert_id(self, cursor, table_name, pk_name):
         """
@@ -164,7 +180,9 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
         This method also receives the table name and the name of the primary-key
         column.
         """
-        cursor.execute('select '+self.connection.ops.get_seq_name(table_name,pk_name)+'.currval from dummy')
+        seq_name = self.connection.ops.get_seq_name(table_name, pk_name)
+        sql = 'select {}.currval from dummy'.format(seq_name)
+        cursor.execute(sql)
         return cursor.fetchone()[0]
 
     def value_to_db_datetime(self, value):
@@ -178,21 +196,24 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
             # HANA doesn't support timezone. If tzinfo is present truncate it.
             # Better set USE_TZ=False in settings.py
             import datetime
-            return unicode(datetime.datetime(value.year,value.month,value.day,value.hour,\
-                    value.minute,value.second,value.microsecond))
+            return unicode(
+                datetime.datetime(
+                    value.year, value.month, value.day, value.hour, value.minute, value.second, value.microsecond
+                )
+            )
         return unicode(value)
 
     def lookup_cast(self, lookup_type, internal_type=None):
         if lookup_type in ('iexact', 'icontains', 'istartswith', 'iendswith'):
-            return "UPPER(%s)"
-        return "%s"
+            return 'UPPER(%s)'
+        return '%s'
 
     def convert_values(self, value, field):
         """
         Type conversion for boolean field. Keping values as 0/1 confuses
         the modelforms.
         """
-        if (field and field.get_internal_type() in ("BooleanField", "NullBooleanField") and value in (0, 1)):
+        if (field and field.get_internal_type() in ('BooleanField', 'NullBooleanField') and value in (0, 1)):
             value = bool(value)
         return value
 
@@ -249,7 +270,7 @@ CREATE SEQUENCE %(seq_name)s RESET BY SELECT IFNULL(MAX(%(column)s),0) + 1 FROM 
         return value
 
     def _geo_db_type(self, f):
-        return "ST_%s" % f.geom_type
+        return 'ST_%s' % f.geom_type
 
     def geo_db_type(self, f):
         internal_type = self._geo_db_type(f)

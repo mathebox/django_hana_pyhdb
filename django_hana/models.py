@@ -5,7 +5,9 @@ from django.utils.encoding import python_2_unicode_compatible
 
 @python_2_unicode_compatible
 class HanaGeometryColumns(models.Model):
-    "Maps to the HANA ST_GEOMETRY_COLUMNS view."
+    """
+    Maps to the HANA ST_GEOMETRY_COLUMNS view.
+    """
     schema_name = models.CharField(max_length=256, null=False)
     table_name = models.CharField(max_length=256, null=False)
     column_name = models.CharField(max_length=256, null=False)
@@ -39,7 +41,9 @@ class HanaGeometryColumns(models.Model):
 
 
 class HanaSpatialRefSys(models.Model, SpatialRefSysMixin):
-    "Maps to the SAP HANA SYS.ST_SPATIAL_REFERENCE_SYSTEMS view."
+    """
+    Maps to the SAP HANA SYS.ST_SPATIAL_REFERENCE_SYSTEMS view.
+    """
     owner_name = models.CharField(max_length=256)
     srs_id = models.IntegerField(null=False)
     srs_name = models.CharField(max_length=256, null=False)

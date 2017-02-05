@@ -10,9 +10,8 @@ from django.db import utils
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.features import BaseDatabaseFeatures
 from django.db.backends.base.validation import BaseDatabaseValidation
-from django.db.backends.signals import connection_created
+from django.db.transaction import TransactionManagementError
 from django.utils import six
-from django.utils.timezone import utc
 
 from django_hana.client import DatabaseClient
 from django_hana.creation import DatabaseCreation
@@ -24,9 +23,10 @@ try:
     import pyhdb as Database
 except ImportError as e:
     from django.core.exceptions import ImproperlyConfigured
-    raise ImproperlyConfigured("Error loading PyHDB module: %s" % e)
+    raise ImproperlyConfigured('Error loading PyHDB module: %s' % e)
 
 logger = logging.getLogger('django.db.backends')
+
 
 class DatabaseFeatures(BaseDatabaseFeatures, BaseSpatialFeatures):
     needs_datetime_string_cast = True
@@ -49,8 +49,8 @@ class DatabaseFeatures(BaseDatabaseFeatures, BaseSpatialFeatures):
 
 class CursorWrapper(object):
     """
-        Hana doesn't support %s placeholders
-        Wrapper to convert all %s placeholders to qmark(?) placeholders
+    Hana doesn't support %s placeholders
+    Wrapper to convert all %s placeholders to qmark(?) placeholders
     """
     codes_for_integrityerror = (301,)
 
@@ -80,10 +80,9 @@ class CursorWrapper(object):
         # self.cursor.close()
         pass
 
-
     def execute(self, sql, params=()):
         """
-            execute with replaced placeholders
+        execute with replaced placeholders
         """
         try:
             self.cursor.execute(self._replace_params(sql), params)
@@ -112,32 +111,34 @@ class CursorWrapper(object):
         """
         converts %s style placeholders to ?
         """
-        return sql.replace("%s", "?")
+        return sql.replace('%s', '?')
+
 
 class CursorDebugWrapper(CursorWrapper):
-
     def execute(self, sql, params=()):
         self.set_dirty()
         start = time()
         try:
-            return CursorWrapper.execute(self,sql, params)
+            return CursorWrapper.execute(self, sql, params)
         finally:
             stop = time()
             duration = stop - start
             sql = self.db.ops.last_executed_query(self.cursor, sql, params)
             self.db.queries.append({
                 'sql': sql,
-                'time': "%.3f" % duration,
+                'time': '%.3f' % duration,
             })
-            logger.debug('(%.3f) %s; args=%s' % (duration, sql, params),
-                extra={'duration': duration, 'sql': sql, 'params': params}
-            )
+            logger.debug('(%.3f) %s; args=%s' % (duration, sql, params), extra={
+                'duration': duration,
+                'sql': sql,
+                'params': params,
+            })
 
     def executemany(self, sql, param_list):
         self.set_dirty()
         start = time()
         try:
-            return CursorWrapper.executemany(self,sql, param_list)
+            return CursorWrapper.executemany(self, sql, param_list)
         finally:
             stop = time()
             duration = stop - start
@@ -147,11 +148,13 @@ class CursorDebugWrapper(CursorWrapper):
                 times = '?'
             self.db.queries.append({
                 'sql': '%s times: %s' % (times, sql),
-                'time': "%.3f" % duration,
+                'time': '%.3f' % duration,
             })
-            logger.debug('(%.3f) %s; args=%s' % (duration, sql, param_list),
-                extra={'duration': duration, 'sql': sql, 'params': param_list}
-            )
+            logger.debug('(%.3f) %s; args=%s' % (duration, sql, param_list), extra={
+                'duration': duration,
+                'sql': sql,
+                'params': param_list
+            })
 
 
 class DatabaseWrapper(BaseDatabaseWrapper):
@@ -236,8 +239,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if not self.settings_dict['NAME']:
             from django.core.exceptions import ImproperlyConfigured
             raise ImproperlyConfigured(
-                "settings.DATABASES is improperly configured. "
-                "Please supply the NAME value.")
+                'settings.DATABASES is improperly configured. '
+                'Please supply the NAME value.'
+            )
         conn_params = {}
         if self.settings_dict['USER']:
             conn_params['user'] = self.settings_dict['USER']
@@ -255,9 +259,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         )
         # set autocommit on by default
         self.set_autocommit(True)
-        self.default_schema=self.settings_dict['NAME']
+        self.default_schema = self.settings_dict['NAME']
         # make it upper case
-        self.default_schema=self.default_schema.upper()
+        self.default_schema = self.default_schema.upper()
         self.create_or_set_default_schema()
 
     def _cursor(self):
@@ -271,8 +275,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         # Call parent, in order to support cursor overriding from apps like Django Debug Toolbar
         # self.BaseDatabaseWrapper API is very asymetrical here - uses make_debug_cursor() for the
         # debug cursor, but directly instantiates urils.CursorWrapper for the regular one
-        result = super (DatabaseWrapper, self).cursor ()
-        if getattr(result,'is_hana',False):
+        result = super(DatabaseWrapper, self).cursor()
+        if getattr(result, 'is_hana', False):
             cursor = result
         else:
             cursor = CursorWrapper(self._cursor(), self)
@@ -286,18 +290,18 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def create_or_set_default_schema(self):
         """
-            create if doesn't exist and then make it default
+        Create if doesn't exist and then make it default
         """
         cursor = self.cursor()
-        cursor.execute("select (1) as a from schemas where schema_name='%s'" % self.default_schema)
-        res=cursor.fetchone()
+        cursor.execute('select (1) as a from schemas where schema_name="%s"' % self.default_schema)
+        res = cursor.fetchone()
         if not res:
-            cursor.execute("create schema %s" % self.default_schema)
-        cursor.execute("set schema "+self.default_schema)
+            cursor.execute('create schema %s' % self.default_schema)
+        cursor.execute('set schema ' + self.default_schema)
 
     def _enter_transaction_management(self, managed):
         """
-            Disables autocommit on entering a transaction
+        Disables autocommit on entering a transaction
         """
         self.ensure_connection()
         if self.features.uses_autocommit and managed:
@@ -305,18 +309,16 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def leave_transaction_management(self):
         """
-            on leaving a transaction restore autocommit behavior
+        On leaving a transaction restore autocommit behavior
         """
         try:
             if self.transaction_state:
                 del self.transaction_state[-1]
             else:
-                raise TransactionManagementError("This code isn't under transaction "
-                    "management")
+                raise TransactionManagementError('This code isn\'t under transaction management')
             if self._dirty:
                 self.rollback()
-                raise TransactionManagementError("Transaction managed block ended with "
-                    "pending COMMIT/ROLLBACK")
+                raise TransactionManagementError('Transaction managed block ended with pending COMMIT/ROLLBACK')
         except:
             raise
         finally:

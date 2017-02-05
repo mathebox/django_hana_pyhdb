@@ -1,14 +1,12 @@
 from __future__ import unicode_literals
 
-from django.db.backends.base.introspection import (
-    BaseDatabaseIntrospection, TableInfo
-)
+from django.db.backends.base.introspection import BaseDatabaseIntrospection, TableInfo
 
 
 class DatabaseIntrospection(BaseDatabaseIntrospection):
     # Maps type codes to Django Field types.
     data_types_reverse = {
-        16: 'BooleanField',
+        # 16: 'BooleanField',
         20: 'BigIntegerField',
         21: 'SmallIntegerField',
         3: 'IntegerField',
@@ -25,10 +23,14 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
     }
 
     def get_table_list(self, cursor):
-        "Returns a list of table names in the current database."
-        cursor.execute("select table_name, 't' from tables where schema_name='%s' \
-                        UNION select view_name, 'v' from views where schema_name='%s'"
-                        % (self.connection.default_schema, self.connection.default_schema,))
+        """
+        Returns a list of table names in the current database.
+        """
+        sql = (
+            'select table_name, "t" from tables where schema_name="{0}" '
+            'UNION select view_name, "v" from views where schema_name="{0}"'
+        )
+        cursor.execute(sql.format(self.connection.default_schema))
         result = [TableInfo(row[0], row[1]) for row in cursor.fetchall()]
         result = result + [TableInfo(t.name.lower(), t.type) for t in result]
         return result
@@ -37,8 +39,10 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         return unicode(name.upper())
 
     def get_table_description(self, cursor, table_name):
-        "Returns a description of the table, with the DB-API cursor.description interface."
-        cursor.execute("SELECT * FROM %s LIMIT 1" % self.connection.ops.quote_name(table_name))
+        """
+        Returns a description of the table, with the DB-API cursor.description interface.
+        """
+        cursor.execute('SELECT * FROM %s LIMIT 1' % self.connection.ops.quote_name(table_name))
         return cursor.description
 
     def get_relations(self, cursor, table_name):
@@ -60,15 +64,16 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         key_columns = []
         table_name = self.connection.ops.quote_name(table_name).replace('"', '')
         schema_name = self.connection.ops.quote_name(self.connection.default_schema).replace('"', '')
-        cursor.execute("""
-            SELECT column_name, referenced_table_name, referenced_column_name
-            FROM REFERENTIAL_CONSTRAINTS
-            WHERE table_name = %s
-                AND schema_name = %s
-                AND referenced_schema_name = %s
-                AND referenced_table_name IS NOT NULL
-                AND referenced_column_name IS NOT NULL""",
-                [table_name, schema_name, schema_name])
+        sql = (
+            'SELECT column_name, referenced_table_name, referenced_column_name '
+            'FROM REFERENTIAL_CONSTRAINTS '
+            'WHERE table_name = %s '
+            'AND schema_name = %s '
+            'AND referenced_schema_name = %s '
+            'AND referenced_table_name IS NOT NULL '
+            'AND referenced_column_name IS NOT NULL'
+        )
+        cursor.execute(sql, [table_name, schema_name, schema_name])
         key_columns.extend(cursor.fetchall())
         return key_columns
 
@@ -77,36 +82,36 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         table_name = self.connection.ops.quote_name(table_name).replace('"', '')
         schema_name = self.connection.ops.quote_name(self.connection.default_schema).replace('"', '')
         # Fetch pk and unique constraints
-        sql = """
-    SELECT constraint_name, column_name, is_primary_key, is_unique_key
-    FROM CONSTRAINTS
-    WHERE schema_name = %s
-        AND table_name = %s
-        """
+        sql = (
+            'SELECT constraint_name, column_name, is_primary_key, is_unique_key '
+            'FROM CONSTRAINTS '
+            'WHERE schema_name = %s '
+            'AND table_name = %s'
+        )
         cursor.execute(sql, [schema_name, table_name])
         for constraint, column, pk, unique in cursor.fetchall():
             # If we're the first column, make the record
             if constraint not in constraints:
                 constraints[constraint] = {
-                    "columns": set(),
-                    "primary_key": bool(pk),
-                    "unique": bool(unique),
-                    "foreign_key": None,
-                    "check": False,  # check constraints are not supported in SAP HANA
-                    "index": True,  # All P and U come with index
+                    'columns': set(),
+                    'primary_key': bool(pk),
+                    'unique': bool(unique),
+                    'foreign_key': None,
+                    'check': False,  # check constraints are not supported in SAP HANA
+                    'index': True,  # All P and U come with index
                 }
             # Record the details
             constraints[constraint]['columns'].add(column)
         # Fetch fk constraints
-        sql = """
-    SELECT constraint_name, column_name, referenced_table_name, referenced_column_name
-    FROM REFERENTIAL_CONSTRAINTS
-    WHERE table_name = %s
-        AND schema_name = %s
-        AND referenced_schema_name = %s
-        AND referenced_table_name IS NOT NULL
-        AND referenced_column_name IS NOT NULL
-        """
+        sql = (
+            'SELECT constraint_name, column_name, referenced_table_name, referenced_column_name '
+            'FROM REFERENTIAL_CONSTRAINTS '
+            'WHERE table_name = %s '
+            'AND schema_name = %s '
+            'AND referenced_schema_name = %s '
+            'AND referenced_table_name IS NOT NULL '
+            'AND referenced_column_name IS NOT NULL'
+        )
         cursor.execute(sql, [table_name, schema_name, schema_name])
         for constraint, column, ref_table, ref_column in cursor.fetchall():
             if constraint not in constraints:
@@ -122,49 +127,52 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
             # Record the details
             constraints[constraint]['columns'].add(column)
         # Fetch indexes
-        cursor.execute("""
-    SELECT index_name, column_name
-    FROM index_columns
-    WHERE schema_name = %s
-        AND table_name = %s
-        """, [schema_name, table_name])
+        sql = (
+            'SELECT index_name, column_name '
+            'FROM index_columns '
+            'WHERE schema_name = %s '
+            'AND table_name = %s'
+        )
+        cursor.execute(sql, [schema_name, table_name])
         for constraint, column in cursor.fetchall():
             # If we're the first column, make the record
             if constraint not in constraints:
                 constraints[constraint] = {
-                    "columns": set(),
-                    "primary_key": False,
-                    "unique": False,
-                    "foreign_key": None,
-                    "check": False,
-                    "index": True,
+                    'columns': set(),
+                    'primary_key': False,
+                    'unique': False,
+                    'foreign_key': None,
+                    'check': False,
+                    'index': True,
                 }
             # Record the details
             constraints[constraint]['columns'].add(column)
         return constraints
 
     def get_indexes(self, cursor, table_name):
-        sql = """
-    SELECT
-        idx_col.column_name as column_name,
-        CASE WHEN indexes.constraint = 'PRIMARY KEY' THEN 1 ELSE 0 END as is_primary_key,
-        SIGN(LOCATE(indexes.index_type, 'UNIQUE')) as is_unique
-    FROM index_columns idx_col
-        JOIN (SELECT index_oid
-            FROM index_columns
-            WHERE schema_name = %s
-            AND table_name = %s
-            GROUP BY index_oid
-            HAVING count(*) = 1) single_idx_col
-            ON idx_col.index_oid = single_idx_col.index_oid
-        JOIN indexes indexes
-            ON idx_col.index_oid = indexes.index_oid
-        """
+        sql = (
+            'SELECT '
+            'idx_col.column_name as column_name, '
+            'CASE WHEN indexes.constraint = "PRIMARY KEY" THEN 1 ELSE 0 END as is_primary_key, '
+            'SIGN(LOCATE(indexes.index_type, "UNIQUE")) as is_unique '
+            'FROM index_columns idx_col '
+            'JOIN (SELECT index_oid '
+            'FROM index_columns '
+            'WHERE schema_name = %s '
+            'AND table_name = %s '
+            'GROUP BY index_oid '
+            'HAVING count(*) = 1) single_idx_col '
+            'ON idx_col.index_oid = single_idx_col.index_oid '
+            'JOIN indexes indexes '
+            'ON idx_col.index_oid = indexes.index_oid'
+        )
         table_name = self.connection.ops.quote_name(table_name).replace('"', '')
         schema_name = self.connection.ops.quote_name(self.connection.default_schema).replace('"', '')
         cursor.execute(sql, [schema_name, table_name])
         indexes = {}
         for row in cursor.fetchall():
-            indexes[row[0]] = {'primary_key': bool(row[1]),
-                               'unique': bool(row[2])}
+            indexes[row[0]] = {
+                'primary_key': bool(row[1]),
+                'unique': bool(row[2]),
+            }
         return indexes

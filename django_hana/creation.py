@@ -2,7 +2,6 @@ import sys
 import time
 
 from django.db.backends.base.creation import BaseDatabaseCreation
-from django.db.backends.utils import truncate_name
 
 import django_hana
 
@@ -29,8 +28,7 @@ class DatabaseCreation(BaseDatabaseCreation):
                 # database columns in this table.
                 continue
             # Make the definition (e.g. 'foo VARCHAR(30)') for this field.
-            field_output = [style.SQL_FIELD(qn(f.column)),
-                style.SQL_COLTYPE(col_type)]
+            field_output = [style.SQL_FIELD(qn(f.column)), style.SQL_COLTYPE(col_type)]
             if not f.null:
                 field_output.append(style.SQL_KEYWORD('NOT NULL'))
             if f.primary_key:
@@ -40,31 +38,27 @@ class DatabaseCreation(BaseDatabaseCreation):
             if tablespace and f.unique:
                 # We must specify the index tablespace inline, because we
                 # won't be generating a CREATE INDEX statement for this field.
-                tablespace_sql = self.connection.ops.tablespace_sql(
-                    tablespace, inline=True)
+                tablespace_sql = self.connection.ops.tablespace_sql(tablespace, inline=True)
                 if tablespace_sql:
                     field_output.append(tablespace_sql)
             if f.rel:
-                ref_output, pending = self.sql_for_inline_foreign_key_references(
-                    f, known_models, style)
+                ref_output, pending = self.sql_for_inline_foreign_key_references(f, known_models, style)
                 if pending:
-                    pending_references.setdefault(f.rel.to, []).append(
-                        (model, f))
+                    pending_references.setdefault(f.rel.to, []).append((model, f))
                 else:
                     field_output.extend(ref_output)
             table_output.append(' '.join(field_output))
         for field_constraints in opts.unique_together:
-            table_output.append(style.SQL_KEYWORD('UNIQUE') + ' (%s)' %
-                ", ".join(
-                    [style.SQL_FIELD(qn(opts.get_field(f).column))
-                     for f in field_constraints]))
+            contraints = ', '.join([style.SQL_FIELD(qn(opts.get_field(f).column)) for f in field_constraints])
+            table_output.append(style.SQL_KEYWORD('UNIQUE') + ' (%s)' % contraints)
 
-        ### check which column type
-        table_type = django_hana.MODEL_STORE.get(model.__name__, self.connection.settings_dict.get('DEFAULT_MODEL_STORE', 'COLUMN'))
+        # check which column type
+        store_type = self.connection.settings_dict.get('DEFAULT_MODEL_STORE', 'COLUMN')
+        table_type = django_hana.MODEL_STORE.get(model.__name__, store_type)
 
         full_statement = [style.SQL_KEYWORD('CREATE ' + table_type + ' TABLE') + ' ' +
                           style.SQL_TABLE(qn(opts.db_table)) + ' (']
-        for i, line in enumerate(table_output): # Combine and add commas.
+        for i, line in enumerate(table_output):  # Combine and add commas.
             full_statement.append(
                 '    %s%s' % (line, i < len(table_output)-1 and ',' or ''))
         full_statement.append(')')
@@ -73,8 +67,6 @@ class DatabaseCreation(BaseDatabaseCreation):
                 opts.db_tablespace)
             if tablespace_sql:
                 full_statement.append(tablespace_sql)
-        #HANA complains with semicolon at the end
-        #full_statement.append(';')
         final_output.append('\n'.join(full_statement))
 
         if opts.has_auto_field:
@@ -89,14 +81,12 @@ class DatabaseCreation(BaseDatabaseCreation):
 
         return final_output, pending_references
 
-
-
     def sql_for_inline_foreign_key_references(self, field, known_models, style):
         """
         Return the SQL snippet defining the foreign key reference for a field.
                 Foreign key not supported
         """
-        return [],False
+        return [], False
 
     def sql_destroy_model(self, model, references_to_delete, style):
         """
@@ -107,7 +97,7 @@ class DatabaseCreation(BaseDatabaseCreation):
             return []
         # Drop the table now
         qn = self.connection.ops.quote_name
-        output = ['%s %s;' % (style.SQL_KEYWORD('DROP TABLE'),style.SQL_TABLE(qn(model._meta.db_table)))]
+        output = ['%s %s;' % (style.SQL_KEYWORD('DROP TABLE'), style.SQL_TABLE(qn(model._meta.db_table)))]
 
         if model._meta.has_auto_field:
             ds = self.connection.ops.drop_sequence_sql(model._meta.db_table)
@@ -129,35 +119,31 @@ class DatabaseCreation(BaseDatabaseCreation):
         cursor = self.connection.cursor()
         try:
             cursor.execute(
-                "CREATE SCHEMA %s %s" % (qn(test_database_name), suffix))
+                'CREATE SCHEMA %s %s' % (qn(test_database_name), suffix))
         except Exception as e:
             # if we want to keep the db, then no need to do any of the below,
             # just return and skip it all.
             if keepdb:
                 return test_database_name
 
-            sys.stderr.write(
-                "Got an error creating the test database: %s\n" % e)
+            sys.stderr.write('Got an error creating the test database: %s\n' % e)
             if not autoclobber:
-                confirm = input(
-                    "Type 'yes' if you would like to try deleting the test "
-                    "database '%s', or 'no' to cancel: " % test_database_name)
+                input_template = (
+                    'Type "yes" if you would like to try deleting the test database "%s", '
+                    'or "no" to cancel: '
+                )
+                confirm = input(input_template % test_database_name)
             if autoclobber or confirm == 'yes':
                 try:
                     if verbosity >= 1:
-                        print("Destroying old test database '%s'..."
-                              % self.connection.alias)
-                    cursor.execute(
-                        "DROP SCHEMA %s CASCADE" % qn(test_database_name))
-                    cursor.execute(
-                        "CREATE SCHEMA %s %s" % (qn(test_database_name),
-                                                   suffix))
+                        print('Destroying old test database "%s"...' % self.connection.alias)
+                    cursor.execute('DROP SCHEMA %s CASCADE' % qn(test_database_name))
+                    cursor.execute('CREATE SCHEMA %s %s' % (qn(test_database_name), suffix))
                 except Exception as e:
-                    sys.stderr.write(
-                        "Got an error recreating the test database: %s\n" % e)
+                    sys.stderr.write('Got an error recreating the test database: %s\n' % e)
                     sys.exit(2)
             else:
-                print("Tests cancelled.")
+                print('Tests cancelled.')
                 sys.exit(1)
 
         return test_database_name
@@ -173,8 +159,7 @@ class DatabaseCreation(BaseDatabaseCreation):
         cursor = self.connection.cursor()
         # Wait to avoid "database is being accessed by other users" errors.
         time.sleep(1)
-        cursor.execute("DROP SCHEMA %s CASCADE"
-                       % self.connection.ops.quote_name(test_database_name))
+        cursor.execute('DROP SCHEMA %s CASCADE' % self.connection.ops.quote_name(test_database_name))
         self.connection.close()
 
     def sql_indexes_for_field(self, model, f, style):
@@ -193,14 +178,14 @@ class DatabaseCreation(BaseDatabaseCreation):
             else:
                 tablespace_sql = ''
             i_name = '%s_%s' % (model._meta.db_table, self._digest(f.column))
-            #HANA complains with semicolon at the end
-            output = [style.SQL_KEYWORD('CREATE INDEX') + ' ' +
-                style.SQL_TABLE(qn(truncate_name(
-                    i_name, self.connection.ops.max_name_length()))) + ' ' +
+            output = [
+                style.SQL_KEYWORD('CREATE INDEX') + ' ' +
+                style.SQL_TABLE(qn(truncate_name(i_name, self.connection.ops.max_name_length()))) + ' ' +
                 style.SQL_KEYWORD('ON') + ' ' +
                 style.SQL_TABLE(qn(model._meta.db_table)) + ' ' +
-                "(%s)" % style.SQL_FIELD(qn(f.column)) +
-                "%s" % tablespace_sql]
+                '(%s)' % style.SQL_FIELD(qn(f.column)) +
+                '%s' % tablespace_sql
+            ]
         else:
             output = []
         return output
