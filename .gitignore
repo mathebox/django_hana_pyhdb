@@ -54,3 +54,6 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Visual Studio Code settings
+.vscode
