@@ -1,8 +1,8 @@
 # Django DB Backend for SAP HANA
 
 [![Build Status](https://travis-ci.org/mathebox/django_hana_pyhdb.svg?branch=master)](https://travis-ci.org/mathebox/django_hana_pyhdb)
+[![codecov](https://codecov.io/gh/mathebox/django_hana_pyhdb/branch/master/graph/badge.svg)](https://codecov.io/gh/mathebox/django_hana_pyhdb)
 
-- for Linux, Mac OS and Windows
 - build on top of [PyHDB](https://github.com/SAP/PyHDB)
 - original work done by [@kapilratnani](https://github.com/kapilratnani) (https://github.com/kapilratnani/django_hana)
 
