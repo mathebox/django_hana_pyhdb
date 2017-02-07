@@ -293,7 +293,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         Create if doesn't exist and then make it default
         """
         cursor = self.cursor()
-        cursor.execute('select (1) as a from schemas where schema_name="%s"' % self.default_schema)
+        cursor.execute('select (1) as a from schemas where schema_name=\'%s\'' % self.default_schema)
         res = cursor.fetchone()
         if not res:
             cursor.execute('create schema %s' % self.default_schema)

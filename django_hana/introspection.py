@@ -27,8 +27,8 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         Returns a list of table names in the current database.
         """
         sql = (
-            'select table_name, "t" from tables where schema_name="{0}" '
-            'UNION select view_name, "v" from views where schema_name="{0}"'
+            'select table_name, \'t\' from tables where schema_name=\'{0}\' '
+            'UNION select view_name, \'v\' from views where schema_name=\'{0}\''
         )
         cursor.execute(sql.format(self.connection.default_schema))
         result = [TableInfo(row[0], row[1]) for row in cursor.fetchall()]
