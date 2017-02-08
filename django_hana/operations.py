@@ -6,6 +6,7 @@ from django.contrib.gis.db.backends.utils import SpatialOperator
 from django.contrib.gis.geometry.backend import Geometry
 from django.contrib.gis.measure import Distance
 from django.db.backends.base.operations import BaseDatabaseOperations
+from django.utils import six
 
 
 class HanaSpatialOperator(SpatialOperator):
@@ -196,12 +197,12 @@ class DatabaseOperations(BaseDatabaseOperations, BaseSpatialOperations):
             # HANA doesn't support timezone. If tzinfo is present truncate it.
             # Better set USE_TZ=False in settings.py
             import datetime
-            return unicode(
+            return six.text_type(
                 datetime.datetime(
                     value.year, value.month, value.day, value.hour, value.minute, value.second, value.microsecond
                 )
             )
-        return unicode(value)
+        return six.text_type(value)
 
     def lookup_cast(self, lookup_type, internal_type=None):
         if lookup_type in ('iexact', 'icontains', 'istartswith', 'iendswith'):

@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from django.db.backends.base.introspection import BaseDatabaseIntrospection, TableInfo
+from django.utils import six
 
 
 class DatabaseIntrospection(BaseDatabaseIntrospection):
@@ -36,7 +37,7 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         return result
 
     def table_name_converter(self, name):
-        return unicode(name.upper())
+        return six.text_type(name.upper())
 
     def get_table_description(self, cursor, table_name):
         """
