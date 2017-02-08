@@ -1,8 +1,8 @@
 import os
 import sys
+import unittest
 
 import django
-import unittest
 
 
 def runtests():

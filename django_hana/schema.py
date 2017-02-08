@@ -1,5 +1,6 @@
 
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor, _related_non_m2m_objects
+from django.utils import six
 
 import django_hana
 
@@ -48,7 +49,7 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
         return field.column.endswith('_id')
 
     def prepare_default(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return '"%s"' % (value,)
         return str(value)
 
