@@ -25,6 +25,10 @@ matrix:
         env: DJANGO=1.8
       - python: "2.7"
         env: TOXENV="isort"
+      - python: "2.7"
+        env: TOXENV="lint"
+      - python: "3.5"
+        env: TOXENV="lint"
     exclude:
       - python: "2.7"
         env: DJANGO=master
