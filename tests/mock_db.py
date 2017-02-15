@@ -6,16 +6,16 @@ class MockCursor(object):
         raise NotImplementedError('Unexpected call to "execute". You need to use "patch_db_execute".')
 
     def executemany(self, sql, param_list):
-        raise NotImplementedError()
+        raise NotImplementedError('Unexpected call to "executemany". You need to use "patch_db_executemany".')
 
     def fetchone(self):
-        return (None,)
+        raise NotImplementedError('Unexpected call to "fetchone". You need to use "patch_db_fetchone".')
 
     def fetchmany(self, count):
-        return []
+        raise NotImplementedError('Unexpected call to "fetchmany". You need to use "patch_db_fetchmany".')
 
     def fetchall(self):
-        return []
+        raise NotImplementedError('Unexpected call to "fetchall". You need to use "patch_db_fetchall".')
 
     def close(self):
         pass
@@ -47,3 +47,7 @@ def mock_connect(*args, **kwargs):
 
 mock_hana = mock.patch('pyhdb.connect', mock_connect)
 patch_db_execute = mock.patch.object(MockCursor, 'execute')
+patch_db_executemany = mock.patch.object(MockCursor, 'executemany')
+patch_db_fetchone = mock.patch.object(MockCursor, 'fetchone')
+patch_db_fetchmany = mock.patch.object(MockCursor, 'fetchmany')
+patch_db_fetchall = mock.patch.object(MockCursor, 'fetchall')
