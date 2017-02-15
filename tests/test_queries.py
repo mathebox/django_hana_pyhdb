@@ -63,6 +63,28 @@ class TestSetup(DatabaseConnectionMixin, unittest.TestCase):
         self.assertEqual(mock_execute.call_args_list, expected_statements)
 
 
+class TestCreation(DatabaseConnectionMixin, unittest.TestCase):
+    @mock_hana
+    @patch_db_execute
+    def setUp(self, mock_execute):
+        connection.ensure_connection()
+
+    @mock_hana
+    @patch_db_execute
+    def test_insert_object(self, mock_execute):
+        expected_statements = [
+            call(
+                'INSERT INTO "TEST_DHP_TESTMODEL" (id,"FIELD") '
+                'VALUES (test_dhp_testmodel_id_seq.nextval, ?)',
+                ['foobar']
+            ),
+            call('select test_dhp_testmodel_id_seq.currval from dummy', ()),
+        ]
+
+        TestModel.objects.create(field='foobar')
+        self.assertEqual(mock_execute.call_args_list, expected_statements)
+
+
 class TestSelection(DatabaseConnectionMixin, unittest.TestCase):
     @mock_hana
     @patch_db_execute

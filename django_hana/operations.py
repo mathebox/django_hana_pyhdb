@@ -222,7 +222,7 @@ class DatabaseOperations(BaseDatabaseOperations, BaseSpatialOperations):
         insert_param_groups = []
         for p in params:
             if isinstance(p, list):
-                insert_param_groups.append(map(self.sanitize_bool, p))
+                insert_param_groups.append([self.sanitize_bool(value) for value in p])
             else:
                 # As of Django 1.9, modify_insert_params is also called in SQLInsertCompiler.field_as_sql.
                 # When it's called from there, params is not a list inside a list, but only a list.
