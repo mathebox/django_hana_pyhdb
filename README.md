@@ -6,7 +6,7 @@
 - build on top of [PyHDB](https://github.com/SAP/PyHDB)
 - original work done by [@kapilratnani](https://github.com/kapilratnani) (https://github.com/kapilratnani/django_hana)
 
-## Setup
+## Installation
 1. Install [PyHDB](https://github.com/SAP/PyHDB)
 
 1. Install the python package via setup.py
@@ -66,9 +66,30 @@ Make use of the following fields:
 - MulitLineString
 - MultiPolygon
 
-## Test system
-- Django 1.8
-- HDB version 1.00.094.00.1427101515
+## Contributing
+
+1. Fork repo
+1. Create your feature branch (e.g. `git checkout -b my-new-feature`)
+1. Implement your feature
+1. Commit your changes (e.g. `git commit -am 'Add some feature'` | See [here](https://git-scm.com/book/ch5-2.html#_commit_guidelines)) 
+1. Push to the branch (e.g. `git push -u origin my-new-feature`)
+1. Create new pull request
+
+## Setting up for developement / Implement a feature
+
+1. (Optional) Create virtualenv
+1. Install development dependencies (`pip install -r requirements-testing.txt`)
+1. Add test case
+1. Run tests
+  1. For all supported python and django version: `tox`
+  1. For a single env: `tox -e <ENVNAME>` (e.g. `tox -e py35django110`)
+  1. Tests failing?
+1. Hack, hack, hack
+1. Run tests again
+  1. Tests should pass
+1. Run isort (`isort -rc .` or `tox -e isort`)
+1. run flake8 (`flake8 .` or `tox -e lint`)
+
 
 ## Disclaimer
 This project is not a part of standard SAP HANA delivery, hence SAP support is not responsible for any queries related to
