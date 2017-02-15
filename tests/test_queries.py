@@ -1,52 +1,59 @@
 import unittest
 
-import mock
-from django.core.management.color import no_style
 from django.db import connection, models
-from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from mock import call
 
+from .mock_db import mock_hana, patch_db_execute
 from .models import TestModel
 
 
-class DatabaseSQLMixin(object):
-    def remove_whitespace(self, statement):
-        return ' '.join(str(statement).replace('\n', '').split())
+class DatabaseConnectionMixin(object):
+    @mock_hana
+    @patch_db_execute
+    def setUp(self, mock_execute):
+        connection.ensure_connection()
 
-    def assertQueryEqual(self, query1, query2):
-        self.assertEqual(self.remove_whitespace(query1), self.remove_whitespace(query2))
 
+class TestSetup(DatabaseConnectionMixin, unittest.TestCase):
+    @mock_hana
+    @patch_db_execute
+    def setUp(self, mock_execute):
+        connection.ensure_connection()
 
-class TestCreation(DatabaseSQLMixin, unittest.TestCase):
-    style = no_style()
-
-    @mock.patch.object(BaseDatabaseSchemaEditor, 'execute')
+    @mock_hana
+    @patch_db_execute
     def test_create_table(self, mock_execute):
         expected_statements = [
-            (((
-                'CREATE COLUMN TABLE "TEST_DHP_TESTMODEL" ('
-                '"ID" integer NOT NULL PRIMARY KEY, "FIELD" nvarchar(100) NOT NULL)'
-            ), None),),
-            (((
+            call(
+                'CREATE COLUMN TABLE "TEST_DHP_TESTMODEL" '
+                '("ID" integer NOT NULL PRIMARY KEY, "FIELD" nvarchar(100) NOT NULL)',
+                None
+            ),
+            call(
                 'CREATE SEQUENCE "TEST_DHP_TESTMODEL_ID_SEQ" '
-                'RESET BY SELECT IFNULL(MAX("ID"),0) + 1 FROM "TEST_DHP_TESTMODEL"'
-            ),),),
+                'RESET BY SELECT IFNULL(MAX("ID"),0) + 1 FROM "TEST_DHP_TESTMODEL"',
+                []
+            ),
         ]
 
         with connection.schema_editor() as editor:
             editor.create_model(TestModel)
         self.assertEqual(mock_execute.call_args_list, expected_statements)
 
-    @mock.patch.object(BaseDatabaseSchemaEditor, 'execute')
+    @mock_hana
+    @patch_db_execute
     def test_add_column_default_value(self, mock_execute):
         expected_statements = [
-            (((
+            call(
                 'ALTER TABLE "TEST_DHP_TESTMODEL" '
-                'ADD ("NEW_CHAR_FIELD" nvarchar(50) DEFAULT "default_value" NOT NULL)'
-            ), []),),
-            (((
+                'ADD ("NEW_CHAR_FIELD" nvarchar(50) DEFAULT "default_value" NOT NULL)',
+                []
+            ),
+            call(
                 'ALTER TABLE "TEST_DHP_TESTMODEL" '
-                'ALTER ("NEW_CHAR_FIELD" nvarchar(50) DEFAULT "default_value" NOT NULL)'
-            ),),),
+                'ALTER ("NEW_CHAR_FIELD" nvarchar(50) DEFAULT "default_value" NOT NULL)',
+                []
+            ),
         ]
 
         with connection.schema_editor() as editor:
@@ -56,13 +63,13 @@ class TestCreation(DatabaseSQLMixin, unittest.TestCase):
         self.assertEqual(mock_execute.call_args_list, expected_statements)
 
 
-class TestSelection(DatabaseSQLMixin, unittest.TestCase):
+class TestSelection(DatabaseConnectionMixin, unittest.TestCase):
+    @mock_hana
+    @patch_db_execute
+    def test_select_model(self, mock_execute):
+        expected_statements = [
+            call('SELECT "TEST_DHP_TESTMODEL"."ID", "TEST_DHP_TESTMODEL"."FIELD" FROM "TEST_DHP_TESTMODEL"', ()),
+        ]
 
-    def test_select_model(self):
-        expected = (
-            'SELECT "TEST_DHP_TESTMODEL"."ID", "TEST_DHP_TESTMODEL"."FIELD" '
-            'FROM "TEST_DHP_TESTMODEL"'
-        )
-
-        qs = TestModel.objects.all()
-        self.assertQueryEqual(qs.query, expected)
+        list(TestModel.objects.all())  # trigger database query with list()
+        self.assertEqual(mock_execute.call_args_list, expected_statements)
