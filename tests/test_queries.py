@@ -42,12 +42,7 @@ class TestSetup(DatabaseConnectionMixin, unittest.TestCase):
         expected_statements = [
             call(
                 'ALTER TABLE "TEST_DHP_TESTMODEL" '
-                'ADD ("NEW_CHAR_FIELD" nvarchar(50) DEFAULT "default_value" NOT NULL)',
-                []
-            ),
-            call(
-                'ALTER TABLE "TEST_DHP_TESTMODEL" '
-                'ALTER ("NEW_CHAR_FIELD" nvarchar(50) DEFAULT "default_value" NOT NULL)',
+                'ADD ("NEW_CHAR_FIELD" nvarchar(50) NOT NULL)',
                 []
             ),
         ]
