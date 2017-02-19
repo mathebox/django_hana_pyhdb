@@ -13,17 +13,17 @@ from django.db.backends.base.validation import BaseDatabaseValidation
 from django.db.transaction import TransactionManagementError
 from django.utils import six
 
-from django_hana.client import DatabaseClient
-from django_hana.creation import DatabaseCreation
-from django_hana.introspection import DatabaseIntrospection
-from django_hana.operations import DatabaseOperations
-from django_hana.schema import DatabaseSchemaEditor
-
 try:
     import pyhdb as Database
 except ImportError as e:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured('Error loading PyHDB module: %s' % e)
+
+from django_hana.client import DatabaseClient               # NOQA isort:skip
+from django_hana.creation import DatabaseCreation           # NOQA isort:skip
+from django_hana.introspection import DatabaseIntrospection # NOQA isort:skip
+from django_hana.operations import DatabaseOperations       # NOQA isort:skip
+from django_hana.schema import DatabaseSchemaEditor         # NOQA isort:skip
 
 logger = logging.getLogger('django.db.backends')
 

@@ -7,6 +7,9 @@ from django.contrib.gis.geometry.backend import Geometry
 from django.contrib.gis.measure import Distance
 from django.db.backends.base.operations import BaseDatabaseOperations
 from django.utils import six
+from django.utils.encoding import force_text
+
+from .base import Database
 
 
 class HanaSpatialOperator(SpatialOperator):
@@ -252,11 +255,18 @@ class DatabaseOperations(BaseDatabaseOperations, BaseSpatialOperations):
             'PointField', 'LineStringField', 'PolygonField',
             'MultiPointField', 'MultiLineStringField', 'MultiPolygonField',
         )
-        if internal_type in geometry_fields:
+        if internal_type == 'TextField':
+            converters.append(self.convert_textfield_value)
+        elif internal_type in geometry_fields:
             converters.append(self.convert_geometry_value)
         if hasattr(expression.output_field, 'geom_type'):
             converters.append(self.convert_geometry)
         return converters
+
+    def convert_textfield_value(self, value, expression, connection, context):
+        if isinstance(value, Database.NClob):
+            value = force_text(value.read())
+        return value
 
     def convert_geometry_value(self, value, expression, connection, context):
         if value is not None:
