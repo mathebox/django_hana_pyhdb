@@ -3,7 +3,7 @@ import unittest
 from django.db import connection, models
 from mock import call
 
-from .mock_db import mock_hana, patch_db_execute, patch_db_fetchmany, patch_db_fetchone
+from .mock_db import mock_hana, patch_db_execute, patch_db_executemany, patch_db_fetchmany, patch_db_fetchone
 from .models import TestModel
 
 
@@ -71,6 +71,26 @@ class TestCreation(DatabaseConnectionMixin, unittest.TestCase):
 
         TestModel.objects.create(field='foobar')
         self.assertEqual(mock_execute.call_args_list, expected_statements)
+
+    @mock_hana
+    @patch_db_executemany
+    @patch_db_fetchone
+    def test_insert_objects(self, mock_fetchone, mock_execute):
+        expected_statements = [
+            call(
+                'INSERT INTO "TEST_DHP_TESTMODEL" (id,"FIELD") '
+                'VALUES (test_dhp_testmodel_id_seq.nextval, ?)',
+                (['foobar'], ['barbaz'])
+            ),
+        ]
+        mock_fetchone.side_effect = [[1]]
+
+        TestModel.objects.bulk_create([
+            TestModel(field='foobar'),
+            TestModel(field='barbaz'),
+        ])
+
+        self.assertSequenceEqual(mock_execute.call_args_list, expected_statements)
 
 
 class TestSelection(DatabaseConnectionMixin, unittest.TestCase):

@@ -93,7 +93,7 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
         self.return_id = return_id
         with self.connection.cursor() as cursor:
             for sql, params in self.as_sql():
-                if isinstance(params, list) and isinstance(params[0], list):
+                if isinstance(params, (list, tuple)) and isinstance(params[0], (list, tuple)):
                     cursor.executemany(sql, params)
                 else:
                     cursor.execute(sql, params)
