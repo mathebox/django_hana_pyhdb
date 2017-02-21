@@ -1,4 +1,4 @@
-from django.db import models
+from django.contrib.gis.db import models
 
 from django_hana import column_store, row_store
 
@@ -51,6 +51,21 @@ class SimpleColumnModel(models.Model):
 @row_store
 class SimpleRowModel(models.Model):
     char_field = models.CharField(max_length=50)
+
+    class Meta:
+        app_label = 'test_dhp'
+
+
+class SpatialModel(models.Model):
+    point_field = models.PointField()
+    line_string_field = models.LineStringField()
+    polygon_field = models.PolygonField()
+    multi_point_field = models.MultiPointField()
+    multi_line_string_field = models.MultiLineStringField()
+    multi_ploygon_field = models.MultiPolygonField()
+    # geometry_collection_field = models.GeometryCollectionField()
+    # extend_field = models.ExtentField()
+    # raster_field = models.RasterField()
 
     class Meta:
         app_label = 'test_dhp'

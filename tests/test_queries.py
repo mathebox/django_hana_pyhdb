@@ -10,7 +10,7 @@ from mock import call
 from django_hana.base import Database
 
 from .mock_db import mock_hana, patch_db_execute, patch_db_executemany, patch_db_fetchmany, patch_db_fetchone
-from .models import ComplexModel, SimpleColumnModel, SimpleModel, SimpleRowModel
+from .models import ComplexModel, SimpleColumnModel, SimpleModel, SimpleRowModel, SpatialModel
 
 
 class DatabaseConnectionMixin(object):
@@ -108,6 +108,32 @@ class TestSetup(DatabaseConnectionMixin, unittest.TestCase):
 
         with connection.schema_editor() as editor:
             editor.create_model(SimpleRowModel)
+        self.assertSequenceEqual(mock_execute.call_args_list, expected_statements)
+
+    @mock_hana
+    @patch_db_execute
+    def test_create_row_table(self, mock_execute):
+        expected_statements = [
+            call(
+                'CREATE COLUMN TABLE "TEST_DHP_SPATIALMODEL" ("ID" INTEGER NOT NULL PRIMARY KEY, '
+                '"POINT_FIELD" ST_POINT NOT NULL, '
+                '"LINE_STRING_FIELD" ST_GEOMETRY NOT NULL, '
+                '"POLYGON_FIELD" ST_GEOMETRY NOT NULL, '
+                '"MULTI_POINT_FIELD" ST_GEOMETRY NOT NULL, '
+                '"MULTI_LINE_STRING_FIELD" ST_GEOMETRY NOT NULL, '
+                '"MULTI_PLOYGON_FIELD" ST_GEOMETRY NOT NULL'
+                ')',
+                None
+            ),
+            call(
+                'CREATE SEQUENCE "TEST_DHP_SPATIALMODEL_ID_SEQ" '
+                'RESET BY SELECT IFNULL(MAX("ID"),0) + 1 FROM "TEST_DHP_SPATIALMODEL"',
+                []
+            ),
+        ]
+
+        with connection.schema_editor() as editor:
+            editor.create_model(SpatialModel)
         self.assertSequenceEqual(mock_execute.call_args_list, expected_statements)
 
     @mock_hana
