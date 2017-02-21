@@ -10,7 +10,7 @@ from mock import call
 from django_hana.base import Database
 
 from .mock_db import mock_hana, patch_db_execute, patch_db_executemany, patch_db_fetchmany, patch_db_fetchone
-from .models import ComplexModel, SimpleModel
+from .models import ComplexModel, SimpleColumnModel, SimpleModel, SimpleRowModel
 
 
 class DatabaseConnectionMixin(object):
@@ -68,6 +68,46 @@ class TestSetup(DatabaseConnectionMixin, unittest.TestCase):
 
         with connection.schema_editor() as editor:
             editor.create_model(ComplexModel)
+        self.assertSequenceEqual(mock_execute.call_args_list, expected_statements)
+
+    @mock_hana
+    @patch_db_execute
+    def test_create_column_table(self, mock_execute):
+        expected_statements = [
+            call(
+                'CREATE COLUMN TABLE "TEST_DHP_SIMPLECOLUMNMODEL" '
+                '("ID" INTEGER NOT NULL PRIMARY KEY, "CHAR_FIELD" NVARCHAR(50) NOT NULL)',
+                None
+            ),
+            call(
+                'CREATE SEQUENCE "TEST_DHP_SIMPLECOLUMNMODEL_ID_SEQ" '
+                'RESET BY SELECT IFNULL(MAX("ID"),0) + 1 FROM "TEST_DHP_SIMPLECOLUMNMODEL"',
+                []
+            ),
+        ]
+
+        with connection.schema_editor() as editor:
+            editor.create_model(SimpleColumnModel)
+        self.assertSequenceEqual(mock_execute.call_args_list, expected_statements)
+
+    @mock_hana
+    @patch_db_execute
+    def test_create_row_table(self, mock_execute):
+        expected_statements = [
+            call(
+                'CREATE ROW TABLE "TEST_DHP_SIMPLEROWMODEL" '
+                '("ID" INTEGER NOT NULL PRIMARY KEY, "CHAR_FIELD" NVARCHAR(50) NOT NULL)',
+                None
+            ),
+            call(
+                'CREATE SEQUENCE "TEST_DHP_SIMPLEROWMODEL_ID_SEQ" '
+                'RESET BY SELECT IFNULL(MAX("ID"),0) + 1 FROM "TEST_DHP_SIMPLEROWMODEL"',
+                []
+            ),
+        ]
+
+        with connection.schema_editor() as editor:
+            editor.create_model(SimpleRowModel)
         self.assertSequenceEqual(mock_execute.call_args_list, expected_statements)
 
     @mock_hana

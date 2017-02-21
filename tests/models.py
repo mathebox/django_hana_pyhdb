@@ -1,5 +1,7 @@
 from django.db import models
 
+from django_hana import column_store, row_store
+
 
 class SimpleModel(models.Model):
     char_field = models.CharField(max_length=100)
@@ -33,6 +35,22 @@ class ComplexModel(models.Model):
     time_field = models.TimeField()
     url_field = models.URLField()
     uuid_field = models.UUIDField()
+
+    class Meta:
+        app_label = 'test_dhp'
+
+
+@column_store
+class SimpleColumnModel(models.Model):
+    char_field = models.CharField(max_length=50)
+
+    class Meta:
+        app_label = 'test_dhp'
+
+
+@row_store
+class SimpleRowModel(models.Model):
+    char_field = models.CharField(max_length=50)
 
     class Meta:
         app_label = 'test_dhp'
