@@ -15,6 +15,7 @@ from django.utils import six
 
 try:
     import pyhdb as Database
+    setattr(Database, 'Binary', Database.Blob)  # add mapping form Binary to BLOB
 except ImportError as e:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured('Error loading PyHDB module: %s' % e)
@@ -123,6 +124,15 @@ class CursorDebugWrapper(CursorWrapper):
         finally:
             stop = time()
             duration = stop - start
+
+            def sanitize_blob(value):
+                if isinstance(value, Database.Blob):
+                    value = value.encode()
+                return value
+
+            params = [sanitize_blob(p) for p in params] if isinstance(params, (list, tuple)) else params
+            params = sanitize_blob(params)
+
             sql = self.db.ops.last_executed_query(self.cursor, sql, params)
             self.db.queries.append({
                 'sql': sql,
@@ -161,28 +171,31 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     vendor = 'hana'
 
     data_types = {
-        'AutoField':         'integer',
-        'BooleanField':      'tinyint',
-        'CharField':         'nvarchar(%(max_length)s)',
-        'CommaSeparatedIntegerField': 'nvarchar(%(max_length)s)',
-        'DateField':         'date',
-        'DateTimeField':     'timestamp',
-        'DecimalField':      'decimal(%(max_digits)s, %(decimal_places)s)',
-        'FileField':         'nvarchar(%(max_length)s)',
-        'FilePathField':     'nvarchar(%(max_length)s)',
-        'FloatField':        'float',
-        'IntegerField':      'integer',
-        'BigIntegerField':   'bigint',
-        'IPAddressField':    'nvarchar(15)',
-        'GenericIPAddressField': 'nvarchar(39)',
-        'NullBooleanField':  'integer',
-        'OneToOneField':     'integer',
-        'PositiveIntegerField': 'integer',
-        'PositiveSmallIntegerField': 'smallint',
-        'SlugField':         'nvarchar(%(max_length)s)',
-        'SmallIntegerField': 'smallint',
-        'TextField':         'nclob',
-        'TimeField':         'time',
+        'AutoField': 'INTEGER',
+        'BigIntegerField': 'BIGINT',
+        'BinaryField': 'BLOB',
+        'BooleanField': 'TINYINT',
+        'CharField': 'NVARCHAR(%(max_length)s)',
+        'DateField': 'DATE',
+        'DateTimeField': 'TIMESTAMP',
+        'DecimalField': 'DECIMAL(%(max_digits)s, %(decimal_places)s)',
+        'DurationField': 'BIGINT',
+        'FileField': 'NVARCHAR(%(max_length)s)',
+        'FilePathField': 'NVARCHAR(%(max_length)s)',
+        'FloatField': 'FLOAT',
+        'GenericIPAddressField': 'NVARCHAR(39)',
+        'ImageField': 'NVARCHAR(%(max_length)s)',
+        'IntegerField': 'INTEGER',
+        'NullBooleanField': 'TINYINT',
+        'OneToOneField': 'INTEGER',
+        'PositiveIntegerField': 'INTEGER',
+        'PositiveSmallIntegerField': 'SMALLINT',
+        'SlugField': 'NVARCHAR(%(max_length)s)',
+        'SmallIntegerField': 'SMALLINT',
+        'TextField': 'NCLOB',
+        'TimeField': 'TIME',
+        'URLField': 'NVARCHAR(%(max_length)s)',
+        'UUIDField': 'NVARCHAR(32)',
     }
 
     operators = {

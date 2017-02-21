@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import uuid
+
 from django.contrib.gis.db.backends.base.adapter import WKTAdapter
 from django.contrib.gis.db.backends.base.operations import BaseSpatialOperations
 from django.contrib.gis.db.backends.utils import SpatialOperator
@@ -221,6 +223,14 @@ class DatabaseOperations(BaseDatabaseOperations, BaseSpatialOperations):
             value = bool(value)
         return value
 
+    # Decimal to Database. Django == 1.8
+    def value_to_db_decimal(self, value, max_digits, decimal_places):
+        return value or None
+
+    # Decimal to Database. Django >= 1.9
+    def adapt_decimalfield_value(self, value, max_digits=None, decimal_places=None):
+        return value or None
+
     def modify_insert_params(self, placeholder, params):
         insert_param_groups = []
         for p in params:
@@ -257,6 +267,12 @@ class DatabaseOperations(BaseDatabaseOperations, BaseSpatialOperations):
         )
         if internal_type == 'TextField':
             converters.append(self.convert_textfield_value)
+        elif internal_type == 'BinaryField':
+            converters.append(self.convert_binaryfield_value)
+        elif internal_type in ['BooleanField', 'NullBooleanField']:
+            converters.append(self.convert_booleanfield_value)
+        elif internal_type == 'UUIDField':
+            converters.append(self.convert_uuidfield_value)
         elif internal_type in geometry_fields:
             converters.append(self.convert_geometry_value)
         if hasattr(expression.output_field, 'geom_type'):
@@ -266,6 +282,21 @@ class DatabaseOperations(BaseDatabaseOperations, BaseSpatialOperations):
     def convert_textfield_value(self, value, expression, connection, context):
         if isinstance(value, Database.NClob):
             value = force_text(value.read())
+        return value
+
+    def convert_binaryfield_value(self, value, expression, connection, context):
+        if isinstance(value, Database.Blob):
+            value = value.read()
+        return value
+
+    def convert_booleanfield_value(self, value, expression, connection, context):
+        if value in (0, 1):
+            value = bool(value)
+        return value
+
+    def convert_uuidfield_value(self, value, expression, connection, context):
+        if value is not None:
+            value = uuid.UUID(value)
         return value
 
     def convert_geometry_value(self, value, expression, connection, context):
