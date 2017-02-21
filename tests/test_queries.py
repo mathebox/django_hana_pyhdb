@@ -112,7 +112,7 @@ class TestSetup(DatabaseConnectionMixin, unittest.TestCase):
 
     @mock_hana
     @patch_db_execute
-    def test_create_row_table(self, mock_execute):
+    def test_create_spatial_table(self, mock_execute):
         expected_statements = [
             call(
                 'CREATE COLUMN TABLE "TEST_DHP_SPATIALMODEL" ("ID" INTEGER NOT NULL PRIMARY KEY, '
