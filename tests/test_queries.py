@@ -116,13 +116,14 @@ class TestSetup(DatabaseConnectionMixin, unittest.TestCase):
         expected_statements = [
             call(
                 'CREATE COLUMN TABLE "TEST_DHP_SPATIALMODEL" ("ID" INTEGER NOT NULL PRIMARY KEY, '
-                '"POINT_FIELD" ST_POINT NOT NULL, '
-                '"LINE_STRING_FIELD" ST_GEOMETRY NOT NULL, '
-                '"POLYGON_FIELD" ST_GEOMETRY NOT NULL, '
-                '"MULTI_POINT_FIELD" ST_GEOMETRY NOT NULL, '
+                '"GEOMETRY_FIELD" ST_GEOMETRY NOT NULL, '
+                '"GEOMETRY_COLLECTION_FIELD" ST_GEOMETRY NOT NULL, '
                 '"MULTI_LINE_STRING_FIELD" ST_GEOMETRY NOT NULL, '
-                '"MULTI_PLOYGON_FIELD" ST_GEOMETRY NOT NULL'
-                ')',
+                '"MULTI_PLOYGON_FIELD" ST_GEOMETRY NOT NULL, '
+                '"MULTI_POINT_FIELD" ST_GEOMETRY NOT NULL, '
+                '"LINE_STRING_FIELD" ST_GEOMETRY NOT NULL, '
+                '"POINT_FIELD" ST_POINT NOT NULL, '
+                '"POLYGON_FIELD" ST_GEOMETRY NOT NULL)',
                 None
             ),
             call(

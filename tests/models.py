@@ -57,15 +57,15 @@ class SimpleRowModel(models.Model):
 
 
 class SpatialModel(models.Model):
-    point_field = models.PointField()
-    line_string_field = models.LineStringField()
-    polygon_field = models.PolygonField()
-    multi_point_field = models.MultiPointField()
+    geometry_field = models.GeometryField()
+    geometry_collection_field = models.GeometryCollectionField()
     multi_line_string_field = models.MultiLineStringField()
     multi_ploygon_field = models.MultiPolygonField()
-    # geometry_collection_field = models.GeometryCollectionField()
-    # extend_field = models.ExtentField()
-    # raster_field = models.RasterField()
+    multi_point_field = models.MultiPointField()
+    line_string_field = models.LineStringField()
+    point_field = models.PointField()
+    polygon_field = models.PolygonField()
+    # raster_field = models.RasterField()  # for Django 1.9
 
     class Meta:
         app_label = 'test_dhp'
