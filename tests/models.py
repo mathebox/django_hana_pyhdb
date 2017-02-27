@@ -40,6 +40,14 @@ class ComplexModel(models.Model):
         app_label = 'test_dhp'
 
 
+class RelationModel(models.Model):
+    to_one_field = models.ForeignKey(ComplexModel)
+    to_many_field = models.ManyToManyField(ComplexModel)
+
+    class Meta:
+        app_label = 'test_dhp'
+
+
 @column_store
 class SimpleColumnModel(models.Model):
     char_field = models.CharField(max_length=50)

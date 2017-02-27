@@ -3,14 +3,17 @@ import decimal
 import unittest
 import uuid
 
+import django
+import mock
 from django.db import connection, models
 from django.db.models.fields.files import FieldFile
+from django.utils import six
 from mock import call
 
 from django_hana.base import Database
 
 from .mock_db import mock_hana, patch_db_execute, patch_db_executemany, patch_db_fetchmany, patch_db_fetchone
-from .models import ComplexModel, SimpleColumnModel, SimpleModel, SimpleRowModel
+from .models import ComplexModel, RelationModel, SimpleColumnModel, SimpleModel, SimpleRowModel
 
 
 class DatabaseConnectionMixin(object):
@@ -68,6 +71,88 @@ class TestSetup(DatabaseConnectionMixin, unittest.TestCase):
 
         with connection.schema_editor() as editor:
             editor.create_model(ComplexModel)
+        self.assertSequenceEqual(mock_execute.call_args_list, expected_statements)
+
+    @mock_hana
+    @patch_db_execute
+    @mock.patch('__builtin__.hash' if six.PY2 else 'builtins.hash', mock.Mock(side_effect=[  # only Django 1.8
+        3107422457,
+        1315547209,
+        1095174084,
+    ]))
+    def test_create_relationship_table(self, mock_execute):
+        expected_statements = [
+            call(
+                'CREATE COLUMN TABLE "TEST_DHP_RELATIONMODEL" '
+                '("ID" INTEGER NOT NULL PRIMARY KEY, "TO_ONE_FIELD_ID" INTEGER NOT NULL)',
+                None
+            ),
+            call(
+                'CREATE COLUMN TABLE "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD" '
+                '("ID" INTEGER NOT NULL PRIMARY KEY, '
+                '"RELATIONMODEL_ID" INTEGER NOT NULL, '
+                '"COMPLEXMODEL_ID" INTEGER NOT NULL)'
+                if django.VERSION >= (1, 9) else
+                'CREATE COLUMN TABLE "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD" '
+                '("ID" INTEGER NOT NULL PRIMARY KEY, '
+                '"RELATIONMODEL_ID" INTEGER NOT NULL, '
+                '"COMPLEXMODEL_ID" INTEGER NOT NULL, '
+                'UNIQUE ("RELATIONMODEL_ID", "COMPLEXMODEL_ID"))',
+                None
+            ),
+            call(
+                'CREATE SEQUENCE "TEST_DHP_RELATIONMODEL_ID_SEQ" '
+                'RESET BY SELECT IFNULL(MAX("ID"),0) + 1 FROM "TEST_DHP_RELATIONMODEL"',
+                []
+            ),
+            call(
+                'ALTER TABLE "TEST_DHP_RELATIONMODEL" '
+                'ADD CONSTRAINT "TEST_DHP_RELATIONMODEL_TO_ONE_FIELD_ID_B93780F9_FK_TEST_DHP_COMPLEXMODEL_ID" '
+                'FOREIGN KEY ("TO_ONE_FIELD_ID") REFERENCES "TEST_DHP_COMPLEXMODEL" ("ID") ON DELETE CASCADE',
+                []
+            ),
+            call(
+                'CREATE INDEX "TEST_DHP_RELATIONMODEL_2E33486B" ON "TEST_DHP_RELATIONMODEL" ("TO_ONE_FIELD_ID")',
+                []
+            ),
+            call(
+                'CREATE SEQUENCE "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD_ID_SEQ" '
+                'RESET BY SELECT IFNULL(MAX("ID"),0) + 1 FROM "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD"',
+                []
+            ),
+            call(
+                'ALTER TABLE "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD" ADD CONSTRAINT '
+                '"TEST_DHP_RELATIONMODEL_TO_MANY_FIELD_RELATIONMODEL_ID_4E69A849_FK_TEST_DHP_RELATIONMODEL_ID" '
+                'FOREIGN KEY ("RELATIONMODEL_ID") REFERENCES "TEST_DHP_RELATIONMODEL" ("ID") ON DELETE CASCADE',
+                []
+            ),
+            call(
+                'ALTER TABLE "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD" ADD CONSTRAINT '
+                '"TEST_DHP_RELATIONMODEL_TO_MANY_FIELD_COMPLEXMODEL_ID_414707C4_FK_TEST_DHP_COMPLEXMODEL_ID" '
+                'FOREIGN KEY ("COMPLEXMODEL_ID") REFERENCES "TEST_DHP_COMPLEXMODEL" ("ID") ON DELETE CASCADE',
+                []
+            ),
+            call(
+                'CREATE INDEX "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD_87DCF9A5" '
+                'ON "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD" ("RELATIONMODEL_ID")',
+                []
+            ),
+            call(
+                'CREATE INDEX "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD_370D6EEB" '
+                'ON "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD" ("COMPLEXMODEL_ID")',
+                []
+            ),
+        ]
+        if django.VERSION >= (1, 9):
+            expected_statements.insert(8, call(
+                'ALTER TABLE "TEST_DHP_RELATIONMODEL_TO_MANY_FIELD" ADD CONSTRAINT '
+                '"TEST_DHP_RELATIONMODEL_TO_MANY_FIELD_RELATIONMODEL_ID_7FEAA1CD_UNIQ" '
+                'UNIQUE ("RELATIONMODEL_ID", "COMPLEXMODEL_ID")',
+                []
+            ))
+
+        with connection.schema_editor() as editor:
+            editor.create_model(RelationModel)
         self.assertSequenceEqual(mock_execute.call_args_list, expected_statements)
 
     @mock_hana
